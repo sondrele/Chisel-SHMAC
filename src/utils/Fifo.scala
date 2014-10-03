@@ -2,17 +2,17 @@ package utils
 
 import Chisel._
 
-class Fifo(n: Int) extends Module {
-  // TODO: Make a stand-alone bundle that other classes can
-  // use to interface with Fifo
-  val io = new Bundle {
+class FifoIO extends Bundle {
     val write    = Bool(INPUT)
     val canWrite = Bool(OUTPUT) // False if full
     val inData   = UInt(INPUT,  width = 32)
     val read     = Bool(INPUT)
     val canRead  = Bool(OUTPUT) // False if empty
     val outData  = UInt(OUTPUT, width = 32)
-  }
+}
+
+class Fifo(n: Int) extends Module {
+  val io = new FifoIO()
 
   val enqPtr      = Reg(init = UInt(0, log2Up(n)))
   val deqPtr      = Reg(init = UInt(0, log2Up(n)))
