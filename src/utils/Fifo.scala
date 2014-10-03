@@ -3,20 +3,22 @@ package utils
 import Chisel._
 
 class Fifo(n: Int) extends Module {
+  // TODO: Make a stand-alone bundle that other classes can
+  // use to interface with Fifo
   val io = new Bundle {
-    val enqVal = Bool(INPUT)
-    val enqRdy = Bool(OUTPUT)
-    val deqVal = Bool(OUTPUT)
-    val deqRdy = Bool(INPUT)
-    val enqData = UInt(INPUT,  width = 32)
-    val deqData = UInt(OUTPUT, width = 32)
+    val write    = Bool(INPUT)
+    val canWrite = Bool(OUTPUT) // False if full
+    val inData   = UInt(INPUT,  width = 32)
+    val read     = Bool(INPUT)
+    val canRead  = Bool(OUTPUT) // False if empty
+    val outData  = UInt(OUTPUT, width = 32)
   }
 
   val enqPtr      = Reg(init = UInt(0, log2Up(n)))
   val deqPtr      = Reg(init = UInt(0, log2Up(n)))
   val isFull      = Reg(init = Bool(false))
-  val doEnq       = io.enqRdy && io.enqVal
-  val doDeq       = io.deqRdy && io.deqVal
+  val doEnq       = io.canWrite && io.write
+  val doDeq       = io.read && io.canRead
   val isEmpty     = !isFull && (enqPtr === deqPtr)
   val deqPtrIncr  = deqPtr + UInt(1)
   val enqPtrIncr  = enqPtr + UInt(1)
@@ -32,12 +34,12 @@ class Fifo(n: Int) extends Module {
   isFull := is_full_next
   val ram = Mem(UInt(width = 32), n)
   when (doEnq) {
-    ram(enqPtr) := io.enqData
+    ram(enqPtr) := io.inData
   }
 
-  io.enqRdy := !isFull
-  io.deqVal := !isEmpty
-  ram(deqPtr) <> io.deqData
+  io.canWrite := !isFull
+  io.canRead  := !isEmpty
+  ram(deqPtr) <> io.outData
 }
 
 class FifoTest(q: Fifo) extends Tester(q) {
@@ -45,37 +47,39 @@ class FifoTest(q: Fifo) extends Tester(q) {
   val snd = 2
   val trd = 3
   val fth = 4
-  poke(q.io.enqVal, 1)
-  poke(q.io.deqRdy, 0)
 
-  poke(q.io.enqData, fst)
+  // TODO: Verify control signals
+  poke(q.io.write, 1)
+  poke(q.io.read, 0)
+
+  poke(q.io.inData, fst)
   step(1)
 
-  poke(q.io.enqData, snd)
+  poke(q.io.inData, snd)
   step(1)
 
-  poke(q.io.enqData, trd)
+  poke(q.io.inData, trd)
   step(1)
 
-  poke(q.io.enqData, fth)
+  poke(q.io.inData, fth)
   step(1)
 
-  poke(q.io.enqData, 5) // Does not work, queue is full
+  poke(q.io.inData, 5) // Does not work, queue is full
   step(1)
 
-  poke(q.io.enqVal, 0)
-  expect(q.io.deqData, fst)
+  poke(q.io.write, 0)
+  expect(q.io.outData, fst)
   step(1)
 
-  poke(q.io.deqRdy, 1)
-  expect(q.io.deqData, fst)
+  poke(q.io.read, 1)
+  expect(q.io.outData, fst)
   step(1)
 
-  expect(q.io.deqData, snd)
+  expect(q.io.outData, snd)
   step(1)
 
-  expect(q.io.deqData, trd)
+  expect(q.io.outData, trd)
   step(1)
 
-  expect(q.io.deqData, fth)
+  expect(q.io.outData, fth)
 }
