@@ -3,12 +3,12 @@ package utils
 import Chisel._
 
 class FifoIO extends Bundle {
-    val write    = Bool(INPUT)
-    val canWrite = Bool(OUTPUT) // False if full
-    val inData   = UInt(INPUT,  width = 32)
-    val read     = Bool(INPUT)
-    val canRead  = Bool(OUTPUT) // False if empty
-    val outData  = UInt(OUTPUT, width = 32)
+  val write    = Bool(INPUT)
+  val canWrite = Bool(OUTPUT) // False if full
+  val inData   = UInt(INPUT,  width = 32)
+  val read     = Bool(INPUT)
+  val canRead  = Bool(OUTPUT) // False if empty
+  val outData  = UInt(OUTPUT, width = 32)
 }
 
 class Fifo(n: Int) extends Module {

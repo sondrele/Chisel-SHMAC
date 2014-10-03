@@ -2,3 +2,5 @@ generated
 project
 target
 .idea
+chisel-router.sublime-project
+chisel-router.sublime-workspace
