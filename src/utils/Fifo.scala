@@ -48,38 +48,39 @@ class FifoTest(q: Fifo) extends Tester(q) {
   val trd = 3
   val fth = 4
 
-  // TODO: Verify control signals
-  poke(q.io.write, 1)
-  poke(q.io.read, 0)
+  def testFifoWrites() = {
+    poke(q.io.write, 1)
+    poke(q.io.read, 0)
+    poke(q.io.inData, fst)
+    step(1)
+    poke(q.io.inData, snd)
+    step(1)
+    poke(q.io.inData, trd)
+    step(1)
+    poke(q.io.inData, fth)
+    step(1)
+    poke(q.io.inData, 5) // Does not work, queue is full
+    expect(q.io.canWrite, 0)
+    step(1)
+  }
 
-  poke(q.io.inData, fst)
-  step(1)
+  def testFifoReads() = {
+    poke(q.io.write, 0)
+    expect(q.io.canRead, 1)
+    expect(q.io.outData, fst)
+    step(1)
+    poke(q.io.read, 1)
+    expect(q.io.outData, fst)
+    step(1)
+    expect(q.io.outData, snd)
+    step(1)
+    expect(q.io.outData, trd)
+    step(1)
+    expect(q.io.outData, fth)
+    step(1)
+    expect(q.io.canRead, 0)
+  }
 
-  poke(q.io.inData, snd)
-  step(1)
-
-  poke(q.io.inData, trd)
-  step(1)
-
-  poke(q.io.inData, fth)
-  step(1)
-
-  poke(q.io.inData, 5) // Does not work, queue is full
-  step(1)
-
-  poke(q.io.write, 0)
-  expect(q.io.outData, fst)
-  step(1)
-
-  poke(q.io.read, 1)
-  expect(q.io.outData, fst)
-  step(1)
-
-  expect(q.io.outData, snd)
-  step(1)
-
-  expect(q.io.outData, trd)
-  step(1)
-
-  expect(q.io.outData, fth)
+  testFifoWrites()
+  testFifoReads()
 }
