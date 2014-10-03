@@ -3,7 +3,7 @@ package router
 import Chisel._
 import utils.{Fifo, FifoIO}
 
-class InputPort extends Module {
+class InputPort(n: Int) extends Module {
   val io = new Bundle {
     val fifo = new FifoIO()
 
@@ -13,7 +13,7 @@ class InputPort extends Module {
     // val yDir      = UInt(OUTPUT)
   }
 
-  val queue = Module(new Fifo(4))
+  val queue = Module(new Fifo(n))
   io.fifo <> queue.io
 
   when(io.fifo.read || !io.fifo.canRead) {

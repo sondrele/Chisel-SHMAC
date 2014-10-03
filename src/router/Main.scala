@@ -14,7 +14,7 @@ object Main {
       f => new FifoTest(f)
     }
 
-    chiselMainTest(args, () => Module(new InputPort())) {
+    chiselMainTest(args, () => Module(new InputPort(4))) {
       p => new InputPortTest(p)
     }
 
