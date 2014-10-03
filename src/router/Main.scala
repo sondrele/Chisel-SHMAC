@@ -13,6 +13,11 @@ object Main {
     chiselMainTest(args, () => Module(new Fifo(4))) {
       f => new FifoTest(f)
     }
+
+    chiselMainTest(args, () => Module(new InputPort())) {
+      p => new InputPortTest(p)
+    }
+
   }
 
 }
