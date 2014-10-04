@@ -1,4 +1,4 @@
-name := "router-ch"
+name := "chisel-router"
 
 scalaVersion := "2.10.2"
 

@@ -18,6 +18,10 @@ object Main {
       p => new InputPortTest(p)
     }
 
+    chiselMainTest(args, () => Module(new OutputPort(2))) {
+      p => new OutputPortTest(p)
+    }
+
   }
 
 }
