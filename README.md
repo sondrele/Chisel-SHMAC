@@ -1,5 +1,9 @@
 chisel-router
 =============
-Run tests
+Run all tests
 
 ```$ make test```
+
+Test a single module, e.g.
+
+```$ make Fifo.out```
