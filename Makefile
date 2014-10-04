@@ -5,6 +5,7 @@
 SBT ?= sbt
 # package.Object (main)
 MAIN = router.Main
+RUN = run-main $(MAIN)
 TARGET_DIR = generated
 
 TARGET = --targetDir $(TARGET_DIR)
@@ -12,13 +13,16 @@ SW = --backend c
 HW = --backend v
 TEST = --compile --genHarness --test
 
-.PHONY: clean
+.PHONY: clean testall verilog
 
-test:
-	$(SBT) "run-main $(MAIN) $(TARGET) $(SW) $(TEST)"
+testall:
+	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
+
+%.out:
+	$(SBT) "$(RUN) $(@:.out=) $(TARGET) $(SW) $(TEST)"
 
 verilog:
-	$(SBT) "run-main $(MAIN) $(TARGET) $(HW)"
+	$(SBT) "$(RUN) $(TARGET) $(HW)"
 
 clean:
 	$(SBT) clean
