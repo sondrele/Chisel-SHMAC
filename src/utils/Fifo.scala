@@ -3,6 +3,8 @@ package utils
 import Chisel._
 
 class FifoIO extends Bundle {
+  // TODO: The width of inData and outData must be
+  // given as an argument
   val write    = Bool(INPUT)
   val canWrite = Bool(OUTPUT) // False if full
   val inData   = UInt(INPUT,  width = 32)

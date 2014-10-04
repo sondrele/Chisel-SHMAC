@@ -22,6 +22,10 @@ object Main {
       p => new OutputPortTest(p)
     }
 
+    chiselMainTest(args, () => Module(new CrossBar())) {
+      b => new CrossBarTest(b)
+    }
+
   }
 
 }
