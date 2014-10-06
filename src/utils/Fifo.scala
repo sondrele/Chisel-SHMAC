@@ -13,14 +13,19 @@ class FifoIO extends Bundle {
   val outData  = UInt(OUTPUT, width = 32)
 }
 
+class DecoupledFifoIO extends Bundle {
+  val in = Decoupled(UInt(width = 32)).flip()
+  val out = Decoupled(UInt(width = 32))
+}
+
 class Fifo(n: Int) extends Module {
-  val io = new FifoIO()
+  val io = new DecoupledFifoIO()
 
   val enqPtr      = Reg(init = UInt(0, log2Up(n)))
   val deqPtr      = Reg(init = UInt(0, log2Up(n)))
   val isFull      = Reg(init = Bool(false))
-  val doEnq       = io.canWrite && io.write
-  val doDeq       = io.read && io.canRead
+  val doEnq       = io.in.ready && io.in.valid
+  val doDeq       = io.out.valid && io.out.ready
   val isEmpty     = !isFull && (enqPtr === deqPtr)
   val deqPtrIncr  = deqPtr + UInt(1)
   val enqPtrIncr  = enqPtr + UInt(1)
@@ -36,12 +41,12 @@ class Fifo(n: Int) extends Module {
   isFull := is_full_next
   val ram = Mem(UInt(width = 32), n)
   when (doEnq) {
-    ram(enqPtr) := io.inData
+    ram(enqPtr) := io.in.bits
   }
 
-  io.canWrite := !isFull
-  io.canRead  := !isEmpty
-  ram(deqPtr) <> io.outData
+  io.in.ready := !isFull
+  io.out.valid := !isEmpty
+  ram(deqPtr) <> io.out.bits
 }
 
 class FifoTest(q: Fifo) extends Tester(q) {
@@ -51,36 +56,36 @@ class FifoTest(q: Fifo) extends Tester(q) {
   val fth = 4
 
   def testFifoWrites() = {
-    poke(q.io.write, 1)
-    poke(q.io.read, 0)
-    poke(q.io.inData, fst)
+    poke(q.io.in.valid, 1)
+    poke(q.io.out.ready, 0)
+    poke(q.io.in.bits, fst)
     step(1)
-    poke(q.io.inData, snd)
+    poke(q.io.in.bits, snd)
     step(1)
-    poke(q.io.inData, trd)
+    poke(q.io.in.bits, trd)
     step(1)
-    poke(q.io.inData, fth)
+    poke(q.io.in.bits, fth)
     step(1)
-    poke(q.io.inData, 5) // Does not work, queue is full
-    expect(q.io.canWrite, 0)
+    poke(q.io.in.bits, 5) // Does not work, queue is full
+    expect(q.io.in.ready, 0)
     step(1)
   }
 
   def testFifoReads() = {
-    poke(q.io.write, 0)
-    expect(q.io.canRead, 1)
-    expect(q.io.outData, fst)
+    poke(q.io.in.valid, 0)
+    expect(q.io.out.valid, 1)
+    expect(q.io.out.bits, fst)
     step(1)
-    poke(q.io.read, 1)
-    expect(q.io.outData, fst)
+    poke(q.io.out.ready, 1)
+    expect(q.io.out.bits, fst)
     step(1)
-    expect(q.io.outData, snd)
+    expect(q.io.out.bits, snd)
     step(1)
-    expect(q.io.outData, trd)
+    expect(q.io.out.bits, trd)
     step(1)
-    expect(q.io.outData, fth)
+    expect(q.io.out.bits, fth)
     step(1)
-    expect(q.io.canRead, 0)
+    expect(q.io.out.valid, 0)
   }
 
   testFifoWrites()
