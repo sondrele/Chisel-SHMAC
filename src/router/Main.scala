@@ -7,7 +7,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val testArgs = args.slice(1, args.length)
-    val modules = Array("RoutingXY", "Fifo", "InputPort", "OutputPort", "CrossBar", "RouteArbiter")
+    val modules = Array("RoutingXY", "Fifo", "InputPort", "OutputPort", "CrossBar", "RoutingArbiter")
 
     args(0) match {
       case "testall" => testModules(modules, testArgs)
@@ -35,8 +35,8 @@ object Main {
     case "CrossBar" => chiselMainTest(args, () => Module(new CrossBar())) {
       b => new CrossBarTest(b)
     }
-    case "RouteArbiter" => chiselMainTest(args, () => Module(new RouteArbiter())) {
-      b => new RouteArbiterTest(b)
+    case "RoutingArbiter" => chiselMainTest(args, () => Module(new RoutingArbiter())) {
+      b => new RoutingArbiterTest(b)
     }
     case other => println(s"No module with name $other")
   }

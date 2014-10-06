@@ -2,24 +2,39 @@ package router
 
 import Chisel._
 
-class RouteArbiter extends Module {
+/*
+  Toplevel arbiter, wrapping around arbiters for earch of the
+  five directions
+*/
+
+class RoutingArbiter extends Module {
   val io = new Bundle() {
-    val inDirections  = Vec.fill(5) { Bool(INPUT) }
-    val outReady      = Vec.fill(5) { Bool(INPUT) }
-    val outDir        = UInt(OUTPUT, width = 5)
+    val in  = Vec.fill(5) { Decoupled(UInt(width = 32)).flip() }
+    val granted = Decoupled(UInt(width = 32))
   }
 
-  val inIO = Decoupled(Bool(INPUT))
+  val arbiter = Module(new RRArbiter(UInt(), 5))
+  for (i <- 0 until 5) {
+    arbiter.io.in(i) <> io.in(i)
+  }
 
-  // val arbiter = Module(new RRArbiter(UInt(width=1), 1))
-  // arbiter.io.in(0) <> inIO
-  // arbiter.io.in(1) <> io.inDirections(1)
-  // arbiter.io.in(2) <> io.inDirections(2)
-  // arbiter.io.in(3) <> io.inDirections(3)
-  // arbiter.io.in(4) <> io.inDirections(4)
-  io.outDir := UInt(0)
+  io.granted <> arbiter.io.out
 }
 
-class RouteArbiterTest(a: RouteArbiter) extends Tester(a) {
-  expect(a.io.outDir, 0)
+class RoutingArbiterTest(a: RoutingArbiter) extends Tester(a) {
+  // Init input
+  for (i <- 0 until 5) {
+    // Set input data
+    poke(a.io.in(i).bits, i)
+    // Set input data to valid
+    poke(a.io.in(i).valid, 1)
+  }
+  // Start arbiter
+  poke(a.io.granted.ready, 1)
+
+  for (i <- 1 until 10) {
+    // Verify round-robin
+    expect(a.io.granted.bits, i % 5)
+    step(1)
+  }
 }
