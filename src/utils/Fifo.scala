@@ -2,18 +2,9 @@ package utils
 
 import Chisel._
 
-class FifoIO extends Bundle {
+class DecoupledFifoIO extends Bundle {
   // TODO: The width of inData and outData must be
   // given as an argument
-  val write    = Bool(INPUT)
-  val canWrite = Bool(OUTPUT) // False if full
-  val inData   = UInt(INPUT,  width = 32)
-  val read     = Bool(INPUT)
-  val canRead  = Bool(OUTPUT) // False if empty
-  val outData  = UInt(OUTPUT, width = 32)
-}
-
-class DecoupledFifoIO extends Bundle {
   val in = Decoupled(UInt(width = 32)).flip()
   val out = Decoupled(UInt(width = 32))
 }

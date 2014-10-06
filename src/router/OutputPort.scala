@@ -1,11 +1,11 @@
 package router
 
 import Chisel._
-import utils.{Fifo, FifoIO}
+import utils.{Fifo, DecoupledFifoIO}
 
 class OutputPort(n: Int) extends Module {
   val io = new Bundle {
-    val fifo = new FifoIO()
+    val fifo = new DecoupledFifoIO()
   }
 
   val queue = Module(new Fifo(n))
@@ -13,20 +13,19 @@ class OutputPort(n: Int) extends Module {
 }
 
 class OutputPortTest(p: OutputPort) extends Tester(p) {
-
   def testFifoIntegration() = {
-    poke(p.io.fifo.write, 1)
-    expect(p.io.fifo.canWrite, 1)
-    poke(p.io.fifo.inData, 10)
+    poke(p.io.fifo.in.valid, 1)
+    expect(p.io.fifo.in.ready, 1)
+    poke(p.io.fifo.in.bits, 10)
     step(1)
-    poke(p.io.fifo.inData, 100)
-    expect(p.io.fifo.outData, 10)
+    poke(p.io.fifo.in.bits, 100)
+    expect(p.io.fifo.out.bits, 10)
     step(1)
-    expect(p.io.fifo.canWrite, 0)
-    poke(p.io.fifo.read, 1)
-    expect(p.io.fifo.outData, 10)
+    expect(p.io.fifo.in.ready, 0)
+    poke(p.io.fifo.out.ready, 1)
+    expect(p.io.fifo.out.bits, 10)
     step(1)
-    expect(p.io.fifo.outData, 100)
+    expect(p.io.fifo.out.bits, 100)
   }
 
   testFifoIntegration()
