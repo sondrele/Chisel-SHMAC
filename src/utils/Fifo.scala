@@ -2,15 +2,26 @@ package utils
 
 import Chisel._
 
-class DecoupledFifoIO extends Bundle {
+class DecoupledFifoIO(w: Int) extends Bundle {
   // TODO: The width of inData and outData must be
   // given as an argument
-  val in = Decoupled(UInt(width = 32)).flip()
-  val out = Decoupled(UInt(width = 32))
+  val in = Decoupled(UInt(width = w)).flip()
+  val out = Decoupled(UInt(width = w))
 }
 
-class Fifo(n: Int) extends Module {
-  val io = new DecoupledFifoIO()
+class FifoIO(w: Int) extends Bundle {
+  // TODO: The width of inData and outData must be
+  // given as an argument
+  val write    = Bool(INPUT)
+  val canWrite = Bool(OUTPUT) // False if full
+  val inData   = UInt(INPUT,  width = w)
+  val read     = Bool(INPUT)
+  val canRead  = Bool(OUTPUT) // False if empty
+  val outData  = UInt(OUTPUT, width = w)
+}
+
+class Fifo(n: Int, w: Int) extends Module {
+  val io = new DecoupledFifoIO(w)
 
   val enqPtr      = Reg(init = UInt(0, log2Up(n)))
   val deqPtr      = Reg(init = UInt(0, log2Up(n)))
@@ -30,7 +41,7 @@ class Fifo(n: Int) extends Module {
   enqPtr := Mux(doEnq, enqPtrIncr, enqPtr)
   deqPtr := Mux(doDeq, deqPtrIncr, deqPtr)
   isFull := is_full_next
-  val ram = Mem(UInt(width = 32), n)
+  val ram = Mem(UInt(width = w), n)
   when (doEnq) {
     ram(enqPtr) := io.in.bits
   }
