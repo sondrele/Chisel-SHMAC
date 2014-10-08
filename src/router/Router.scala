@@ -12,15 +12,19 @@ class PacketHeader extends Bundle {
 }
 
 class TileLocation extends Bundle {
-  val x = UInt(4)
-  val y = UInt(4)
+  val x = UInt(width = 4)
+  val y = UInt(width = 4)
 }
 
 class Packet extends Bundle {
-  val header      = new PacketHeader()
-  val data        = Vec.fill(16) { UInt(width = 8) }
-  val sender      = new TileLocation()
-  val destination = new TileLocation()
+  val header      = new PacketHeader() // 53 bits
+  val data        = Vec.fill(16) { UInt(width = 8) } // 128 bits
+  val sender      = new TileLocation() // 8 bits
+  val destination = new TileLocation() // 8 bits
+}
+
+object Packet {
+  val length = 197
 }
 
 object Direction {

@@ -5,7 +5,7 @@ import utils.{Fifo, FifoIO}
 
 class InputPort(n: Int) extends Module {
   val io = new Bundle {
-    val fifo = new FifoIO()
+    val fifo = new FifoIO(Packet.length)
 
     val direction = UInt(INPUT, width = 5) // Direction enum
     val request   = UInt(OUTPUT, width = 5)
@@ -13,7 +13,7 @@ class InputPort(n: Int) extends Module {
     // val yDir      = UInt(OUTPUT)
   }
 
-  val queue = Module(new Fifo(n))
+  val queue = Module(new Fifo(n, Packet.length))
   io.fifo <> queue.io
 
   when(io.fifo.read || !io.fifo.canRead) {

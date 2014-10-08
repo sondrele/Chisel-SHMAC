@@ -23,7 +23,7 @@ object Main {
     case "RoutingXY" => chiselMainTest(args, () => Module(new RoutingXY())) {
       r => new RoutingXYTest(r)
     }
-    case "Fifo" => chiselMainTest(args, () => Module(new Fifo(4))) {
+    case "Fifo" => chiselMainTest(args, () => Module(new Fifo(4, Packet.length))) {
       f => new FifoTest(f)
     }
     case "InputPort" => chiselMainTest(args, () => Module(new InputPort(4))) {
