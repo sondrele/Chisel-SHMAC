@@ -38,7 +38,7 @@ object Main {
     case "RoutingArbiter" => chiselMainTest(args, () => Module(new RoutingArbiter())) {
       b => new RoutingArbiterTest(b)
     }
-    case "DirectionArbiter" => chiselMainTest(args, () => Module(new DirectionArbiter(2))) {
+    case "DirectionArbiter" => chiselMainTest(args, () => Module(new DirectionArbiter(5))) {
       b => new DirectionArbiterTest(b)
     }
     case other => println(s"No module with name $other")
