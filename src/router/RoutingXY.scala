@@ -17,15 +17,15 @@ class RoutingXY() extends Module {
   val curYGreater = (io.yCur > io.yDest)
 
   when(curXSmaller) {
-    io.dest := Direction.east
+    io.dest := East.value
   }.elsewhen(curXGreater) {
-    io.dest := Direction.west
+    io.dest := West.value
   }.elsewhen(curYSmaller) {
-    io.dest := Direction.south
+    io.dest := South.value
   }.elsewhen(curYGreater) {
-    io.dest := Direction.north
+    io.dest := North.value
   }.otherwise {
-    io.dest := Direction.local
+    io.dest := Local.value
   }
 }
 
@@ -35,29 +35,29 @@ class RoutingXYTest(xy: RoutingXY) extends Tester(xy) {
 
   poke(xy.io.xCur, 0)
   poke(xy.io.yCur, 0)
-  expect(xy.io.dest, Direction.east.litValue())
+  expect(xy.io.dest, East.value.litValue())
 
   poke(xy.io.xCur, 0)
   poke(xy.io.yCur, 2)
-  expect(xy.io.dest, Direction.east.litValue())
+  expect(xy.io.dest, East.value.litValue())
 
   poke(xy.io.xCur, 2)
   poke(xy.io.yCur, 0)
-  expect(xy.io.dest, Direction.west.litValue())
+  expect(xy.io.dest, West.value.litValue())
 
   poke(xy.io.xCur, 2)
   poke(xy.io.yCur, 2)
-  expect(xy.io.dest, Direction.west.litValue())
+  expect(xy.io.dest, West.value.litValue())
 
   poke(xy.io.xCur, 1)
   poke(xy.io.yCur, 0)
-  expect(xy.io.dest, Direction.south.litValue())
+  expect(xy.io.dest, South.value.litValue())
 
   poke(xy.io.xCur, 1)
   poke(xy.io.yCur, 2)
-  expect(xy.io.dest, Direction.north.litValue())
+  expect(xy.io.dest, North.value.litValue())
 
   poke(xy.io.xCur, 1)
   poke(xy.io.yCur, 1)
-  expect(xy.io.dest, Direction.local.litValue())
+  expect(xy.io.dest, Local.value.litValue())
 }

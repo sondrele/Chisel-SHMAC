@@ -33,12 +33,12 @@ class InputPortTest(p: InputPort) extends Tester(p) {
   }
 
   def testInputPortRequest() = {
-    poke(p.io.direction, Direction.south.litValue())
+    poke(p.io.direction, South.value.litValue())
     poke(p.io.fifo.out.ready, 1)
     expect(p.io.request, 0)
 
     poke(p.io.fifo.out.ready, 0)
-    expect(p.io.request, Direction.south.litValue())
+    expect(p.io.request, South.value.litValue())
   }
 
   testFifoIntegration()
