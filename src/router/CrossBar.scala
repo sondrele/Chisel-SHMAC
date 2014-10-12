@@ -11,16 +11,18 @@ class CrossBar extends Module {
   }
 
   val inData = UInt(width = 32)
-  when(io.fromDir === Direction.east) {
-    inData := io.inData(Direction.east)
-  }.elsewhen(io.fromDir === Direction.north) {
-    inData := io.inData(Direction.north)
-  }.elsewhen(io.fromDir === Direction.west) {
-    inData := io.inData(Direction.west)
-  }.elsewhen(io.fromDir === Direction.south) {
-    inData := io.inData(Direction.south)
-  }.otherwise { //elsewhen(io.fromDir === Direction.local) {
-    inData := io.inData(Direction.local)
+  when(io.fromDir === East.value) {
+    inData := io.inData(East.index)
+  }.elsewhen(io.fromDir === North.value) {
+    inData := io.inData(North.index)
+  }.elsewhen(io.fromDir === West.value) {
+    inData := io.inData(West.index)
+  }.elsewhen(io.fromDir === South.value) {
+    inData := io.inData(South.index)
+  }.elsewhen(io.fromDir === Local.value) {
+    inData := io.inData(Local.index)
+  }.otherwise {
+    inData := UInt(0)
   }
 
   // Default all outputs to 0
@@ -29,32 +31,32 @@ class CrossBar extends Module {
   }
 
   switch(io.toDir) {
-    is(Direction.east)  { io.outData(Direction.east)  := inData }
-    is(Direction.north) { io.outData(Direction.north) := inData }
-    is(Direction.west)  { io.outData(Direction.west)  := inData }
-    is(Direction.south) { io.outData(Direction.south) := inData }
-    is(Direction.local) { io.outData(Direction.local) := inData }
+    is(East.value)  { io.outData(East.index)  := inData }
+    is(North.value) { io.outData(North.index) := inData }
+    is(West.value)  { io.outData(West.index)  := inData }
+    is(South.value) { io.outData(South.index) := inData }
+    is(Local.value) { io.outData(Local.index) := inData }
   }
 }
 
 class CrossBarTest(c: CrossBar) extends Tester(c) {
-  poke(c.io.inData(Direction.east.litValue().toInt),  1)
-  poke(c.io.inData(Direction.north.litValue().toInt), 2)
-  poke(c.io.inData(Direction.west.litValue().toInt),  3)
-  poke(c.io.inData(Direction.south.litValue().toInt), 4)
-  poke(c.io.inData(Direction.local.litValue().toInt), 5)
+  poke(c.io.inData(East.index), 1)
+  poke(c.io.inData(North.index), 2)
+  poke(c.io.inData(West.index), 3)
+  poke(c.io.inData(South.index), 4)
+  poke(c.io.inData(Local.index), 5)
   step(1)
 
-  def testCrossBar(from: UInt, to: UInt, value: Int) = {
-    poke(c.io.fromDir, from.litValue())
-    poke(c.io.toDir,   to.litValue())
-    expect(c.io.outData(to.litValue().toInt), value)
-    expect(c.io.outData(from.litValue().toInt), 0)
+  def testCrossBar(from: TileDir, to: TileDir, value: Int) = {
+    poke(c.io.fromDir, from.value.litValue())
+    poke(c.io.toDir,   to.value.litValue())
+    expect(c.io.outData(to.index), value)
+    expect(c.io.outData(from.index), 0)
   }
 
-  testCrossBar(Direction.east,  Direction.south, 1)
-  testCrossBar(Direction.north, Direction.east,  2)
-  testCrossBar(Direction.west,  Direction.north, 3)
-  testCrossBar(Direction.south, Direction.west,  4)
-  testCrossBar(Direction.local, Direction.north, 5)
+  testCrossBar(East, South, 1)
+  testCrossBar(North, East,  2)
+  testCrossBar(West,  North, 3)
+  testCrossBar(South, West,  4)
+  testCrossBar(Local, North, 5)
 }
