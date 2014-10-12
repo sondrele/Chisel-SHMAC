@@ -26,9 +26,3 @@ class Packet extends Bundle {
 object Packet {
   val length = 197
 }
-
-object Direction {
-
-  // TODO: Direction have to be a bus of of 5 Bools instead of a number
-  val east :: north :: west :: south :: local :: Nil = Enum(UInt(), 5)
-}
