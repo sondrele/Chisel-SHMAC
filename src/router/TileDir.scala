@@ -7,6 +7,19 @@ abstract class TileDir {
   val value: UInt
 }
 
+object TileDir {
+  def getDirection(index: Int): UInt = {
+    index match {
+      case East.index => East.value
+      case North.index => North.value
+      case West.index => West.value
+      case South.index => South.value
+      case Local.index => Local.value
+      case _ => throwException(s"No matching direction for $index")
+    }
+  }
+}
+
 object East extends TileDir {
   override val index = 0
   override val value = UInt("b00001", width = 5)

@@ -24,7 +24,7 @@ class DirectionArbiter(numPorts: Int) extends Module {
     // to the output port corresponding to this arbiter
     // Set the valid request accordingly, only one of these requests will at any time be granted
     requestingInputPorts(i).valid := io.requesting(i) & !io.isEmpty(i) & !io.isFull
-    requestingInputPorts(i).bits := East.value << UInt(i)
+    requestingInputPorts(i).bits := TileDir.getDirection(i)
     readyRequests(i) := requestingInputPorts(i).ready
   }
 
