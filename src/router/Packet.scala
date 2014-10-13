@@ -6,31 +6,69 @@ object Packet {
   val length = 197
 }
 
+object PacketData {
+  val LENGTH              = 196
+
+  val ADDRESS_BEGIN       = 0
+  val ADDRESS_END         = 31
+  val REPLY_INDEX         = 32
+  val WRITE_REQUEST_INDEX = 33
+  val WRITE_MASK_BEGIN    = 34
+  val WRITE_MASK_END      = 49
+  val EXOP_INDEX          = 50
+  val ERROR_INDEX         = 51
+  val DATA_BEGIN          = 52
+  val DATA_END            = 179
+  val X_SEND_BEGIN        = 180
+  val X_SEND_END          = 183
+  val Y_SEND_BEGIN        = 184
+  val Y_SEND_END          = 187
+  val X_DEST_BEGIN        = 188
+  val X_DEST_END          = 191
+  val Y_DEST_BEGIN        = 192
+  val Y_DEST_END          = 195
+
+  def apply(x: Int): PacketData = Lit(x) {
+    PacketData()
+  }
+
+  def apply(x: BigInt): PacketData = Lit(x) {
+    PacketData()
+  }
+
+  def apply(x: UInt): PacketData = Lit(x.litValue()) {
+    PacketData()
+  }
+
+  def apply(dir: IODirection = null): PacketData = {
+    val res = new PacketData()
+    res.create(dir, width = PacketData.LENGTH)
+    res
+  }
+
+  def create(yDest: Int = 0, xDest: Int = 0, ySend: Int = 0, xSend: Int = 0): PacketData = {
+    val yd = UInt(yDest, width = 4)
+    val xd = UInt(xDest, width = 4)
+    val ys = UInt(ySend, width = 4)
+    val xs = UInt(xSend, width = 4)
+
+    val data = Cat(yd, xd, ys, xs, UInt(0, width = 180))
+    PacketData(data)
+  }
+}
+
 class PacketData extends Bits {
   type T = PacketData
 
-  def address: UInt = this(31, 0)
-  def xDest: UInt = this(191, 188)
-  def yDest: UInt = this(195, 192)
+  def address: UInt = this(PacketData.ADDRESS_END, PacketData.ADDRESS_BEGIN)
+  def xDest: UInt = this(PacketData.X_DEST_END, PacketData.X_DEST_BEGIN)
+  def yDest: UInt = this(PacketData.Y_DEST_END, PacketData.Y_DEST_BEGIN)
 
   override def fromInt(x: Int): this.type = {
     PacketData(x).asInstanceOf[this.type]
   }
 }
 
-object PacketData {
-  val length = 197
-
-  def apply(x: Int): PacketData = Lit(x) {
-    PacketData()
-  }
-
-  def apply(dir: IODirection = null): PacketData = {
-    val res = new PacketData()
-    res.create(dir, width = PacketData.length)
-    res
-  }
-}
 
 class PacketDataModule extends Module {
   val io = new Bundle() {
@@ -52,8 +90,21 @@ class PacketDataModule extends Module {
 }
 
 class PacketDataModuleTest(m: PacketDataModule) extends Tester(m) {
-  expect(m.io.address, 0)
-  step(1)
-  poke(m.io.packet, 1)
-  expect(m.io.address, 1)
+  def testBasicGet() {
+    expect(m.io.address, 0)
+    poke(m.io.packet, 1)
+    step(1)
+    expect(m.io.address, 1)
+  }
+
+  def testGetXYDest() {
+    val p = PacketData.create(yDest = 9, xDest = 6)
+    poke(m.io.packet, p.litValue())
+    step(1)
+    expect(m.io.yDest, 9)
+    expect(m.io.xDest, 6)
+  }
+
+  testBasicGet()
+  testGetXYDest()
 }
