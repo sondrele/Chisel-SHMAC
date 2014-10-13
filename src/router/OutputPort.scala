@@ -5,10 +5,10 @@ import utils.{Fifo, DecoupledFifoIO}
 
 class OutputPort(n: Int) extends Module {
   val io = new Bundle {
-    val fifo = new DecoupledFifoIO(PacketData.LENGTH)
+    val fifo = new DecoupledFifoIO(PacketData())
   }
 
-  val queue = Module(new Fifo(n, PacketData.LENGTH))
+  val queue = Module(new Fifo(PacketData(), n))
   io.fifo <> queue.io
 }
 
