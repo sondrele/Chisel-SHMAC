@@ -2,10 +2,6 @@ package router
 
 import Chisel._
 
-object Packet {
-  val length = 197
-}
-
 object PacketData {
   val LENGTH              = 196
 
