@@ -16,7 +16,7 @@ class InputPort(n: Int) extends Module {
   val queue = Module(new Fifo(n, Packet.length))
   io.fifo <> queue.io
 
-  when(io.fifo.out.ready || !io.fifo.out.valid) {
+  when(!io.fifo.out.ready || !io.fifo.out.valid) {
     io.request := UInt(0)
   }.otherwise {
     io.request := io.direction
@@ -25,20 +25,26 @@ class InputPort(n: Int) extends Module {
 
 class InputPortTest(p: InputPort) extends Tester(p) {
 
-  def testFifoIntegration() = {
+  def testFifoIntegration() {
     poke(p.io.fifo.in.valid, 1)
     poke(p.io.fifo.in.bits, 10)
     step(1)
     expect(p.io.fifo.out.bits, 10)
   }
 
-  def testInputPortRequest() = {
+  def testInputPortRequest() {
     poke(p.io.direction, South.value.litValue())
-    poke(p.io.fifo.out.ready, 1)
+    poke(p.io.fifo.out.ready, 0)
     expect(p.io.request, 0)
 
-    poke(p.io.fifo.out.ready, 0)
+    // Set signals to start reading
+    poke(p.io.fifo.in.valid, 0)
+    poke(p.io.fifo.out.ready, 1)
+
     expect(p.io.request, South.value.litValue())
+    step(1)
+    expect(p.io.fifo.out.valid, 0)
+    expect(p.io.request, 0)
   }
 
   testFifoIntegration()
