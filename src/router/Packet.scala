@@ -2,27 +2,6 @@ package router
 
 import Chisel._
 
-class PacketHeader extends Bundle {
-  val address      = UInt(width = 32)
-  val reply        = Bool()
-  val writeRequest = Bool()
-  val writeMask    = UInt(width = 16)
-  val exop         = UInt(width = 2)
-  val error        = Bool()
-}
-
-class TileLocation extends Bundle {
-  val x = UInt(width = 4)
-  val y = UInt(width = 4)
-}
-
-class Packet extends Bundle {
-  val header      = new PacketHeader() // 53 bits
-  val data        = Vec.fill(16) { UInt(width = 8) } // 128 bits
-  val sender      = new TileLocation() // 8 bits
-  val destination = new TileLocation() // 8 bits
-}
-
 object Packet {
   val length = 197
 }
@@ -61,15 +40,11 @@ class PacketDataModule extends Module {
     val yDest = UInt(OUTPUT, width = 4)
   }
 
-  // val upper = Reg(io.out.getUpper)
-
   when (io.packet != UInt(0)) {
-    // io.out := Cat(upper, io.inData)
     io.address := io.packet.address
     io.xDest := io.packet.xDest
     io.yDest := io.packet.yDest
   }.otherwise {
-    // io.out := UInt(0)
     io.address := UInt(0)
     io.xDest := UInt(0)
     io.yDest := UInt(0)
@@ -80,6 +55,5 @@ class PacketDataModuleTest(m: PacketDataModule) extends Tester(m) {
   expect(m.io.address, 0)
   step(1)
   poke(m.io.packet, 1)
-  // expect(m.io.out, 1)
   expect(m.io.address, 1)
 }
