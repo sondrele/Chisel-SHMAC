@@ -46,11 +46,11 @@ object PacketData {
     res
   }
 
-  def create(yDest: Int = 0, xDest: Int = 0, ySend: Int = 0, xSend: Int = 0): PacketData = {
+  def create(yDest: Int = 0, xDest: Int = 0, ySender: Int = 0, xSender: Int = 0): PacketData = {
     val yd = UInt(yDest, width = 4)
     val xd = UInt(xDest, width = 4)
-    val ys = UInt(ySend, width = 4)
-    val xs = UInt(xSend, width = 4)
+    val ys = UInt(ySender, width = 4)
+    val xs = UInt(xSender, width = 4)
 
     val data = Cat(yd, xd, ys, xs, UInt(0, width = 180))
     PacketData(data)
@@ -61,6 +61,9 @@ class PacketData extends Bits {
   type T = PacketData
 
   def address: UInt = this(PacketData.ADDRESS_END, PacketData.ADDRESS_BEGIN)
+  def isReply: Bool = this(PacketData.REPLY_INDEX).toBool()
+  def xSender: UInt = this(PacketData.X_SEND_END, PacketData.X_SEND_BEGIN)
+  def ySender: UInt = this(PacketData.Y_SEND_END, PacketData.Y_SEND_BEGIN)
   def xDest: UInt = this(PacketData.X_DEST_END, PacketData.X_DEST_BEGIN)
   def yDest: UInt = this(PacketData.Y_DEST_END, PacketData.Y_DEST_BEGIN)
 
@@ -76,16 +79,22 @@ class PacketDataModule extends Module {
     val address = UInt(OUTPUT, width = 32)
     val xDest = UInt(OUTPUT, width = 4)
     val yDest = UInt(OUTPUT, width = 4)
+    val xSender = UInt(OUTPUT, width = 4)
+    val ySender = UInt(OUTPUT, width = 4)
   }
 
   when (io.packet != UInt(0)) {
     io.address := io.packet.address
     io.xDest := io.packet.xDest
     io.yDest := io.packet.yDest
+    io.xSender := io.packet.xSender
+    io.ySender := io.packet.ySender
   }.otherwise {
     io.address := UInt(0)
     io.xDest := UInt(0)
     io.yDest := UInt(0)
+    io.xSender := UInt(0)
+    io.ySender := UInt(0)
   }
 }
 
@@ -105,6 +114,15 @@ class PacketDataModuleTest(m: PacketDataModule) extends Tester(m) {
     expect(m.io.xDest, 6)
   }
 
+  def testGetXYSend() {
+    val p = PacketData.create(ySender = 6, xSender = 9)
+    poke(m.io.packet, p.litValue())
+    step(1)
+    expect(m.io.ySender, 6)
+    expect(m.io.xSender, 9)
+  }
+
   testBasicGet()
   testGetXYDest()
+  testGetXYSend()
 }
