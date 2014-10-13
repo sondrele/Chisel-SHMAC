@@ -26,9 +26,6 @@ object Main {
     case "Fifo" => chiselMainTest(args, () => Module(new Fifo(PacketData(), 4))) {
       f => new FifoTest(f)
     }
-    // case "FifoG" => chiselMainTest(args, () => Module(new FifoG(PacketData(), 4))) {
-    //   f => new FifoGTest(f)
-    // }
     case "InputPort" => chiselMainTest(args, () => Module(new InputPort(4))) {
       p => new InputPortTest(p)
     }
