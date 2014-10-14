@@ -11,6 +11,8 @@ class InputPort(n: Int) extends Module {
     val request   = UInt(OUTPUT, width = 5)
     val xDest     = UInt(OUTPUT, width = 4)
     val yDest     = UInt(OUTPUT, width = 4)
+    val xSender   = UInt(OUTPUT, width = 4)
+    val ySender   = UInt(OUTPUT, width = 4)
   }
 
   val queue = Module(new Fifo(PacketData(), n))
@@ -18,6 +20,8 @@ class InputPort(n: Int) extends Module {
 
   io.xDest := io.fifo.out.bits.xDest
   io.yDest := io.fifo.out.bits.yDest
+  io.xSender := io.fifo.out.bits.xSender
+  io.ySender := io.fifo.out.bits.ySender
 
   when(!io.fifo.out.ready || !io.fifo.out.valid) {
     io.request := UInt(0)
@@ -54,11 +58,13 @@ class InputPortTest(p: InputPort) extends Tester(p) {
     poke(p.io.fifo.in.valid, 1)
     poke(p.io.fifo.out.ready, 0)
 
-    val packet = PacketData.create(yDest = 9, xDest = 15)
+    val packet = PacketData.create(yDest = 9, xDest = 15, ySender = 5, xSender = 3)
     poke(p.io.fifo.in.bits, packet.litValue())
     step(1)
-    expect(p.io.xDest, 15)
     expect(p.io.yDest, 9)
+    expect(p.io.xDest, 15)
+    expect(p.io.ySender, 5)
+    expect(p.io.xSender, 3)
   }
 
   testFifoIntegration()
