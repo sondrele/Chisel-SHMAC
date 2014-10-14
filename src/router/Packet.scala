@@ -42,13 +42,20 @@ object PacketData {
     res
   }
 
-  def create(yDest: Int = 0, xDest: Int = 0, ySender: Int = 0, xSender: Int = 0): PacketData = {
+  def create(
+    address: Int = 0,
+    yDest: Int = 0,
+    xDest: Int = 0,
+    ySender: Int = 0,
+    xSender: Int = 0):
+  PacketData = {
+    val addr = UInt(address, width = 32)
     val yd = UInt(yDest, width = 4)
     val xd = UInt(xDest, width = 4)
     val ys = UInt(ySender, width = 4)
     val xs = UInt(xSender, width = 4)
 
-    val data = Cat(yd, xd, ys, xs, UInt(0, width = 180))
+    val data = Cat(yd, xd, ys, xs, UInt(0, width = 148), addr)
     PacketData(data)
   }
 }

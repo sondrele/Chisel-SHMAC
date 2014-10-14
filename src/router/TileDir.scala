@@ -15,7 +15,7 @@ object TileDir {
       case West.index => West.value
       case South.index => South.value
       case Local.index => Local.value
-      case _ => throwException(s"No matching direction for $index")
+      case _ => sys.error(s"No matching direction for $index")
     }
   }
 }
