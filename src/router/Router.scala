@@ -32,11 +32,19 @@ class Router(x: Int, y: Int) extends Module {
   io.inReady(0) := inEast.io.fifo.in.ready
   io.outData(0) := outEast.io.fifo.out.bits
 
-  val routing = Module(new RouteComputation())
-  routing.io.xCur := tileX
-  routing.io.yCur := tileY
-  routing.io.xDest := inEast.io.xDest
-  routing.io.yDest := inEast.io.yDest
+  val destRoute = Module(new RouteComputation())
+  destRoute.io.xCur := tileX
+  destRoute.io.yCur := tileY
+  destRoute.io.xDest := inEast.io.xDest
+  destRoute.io.yDest := inEast.io.yDest
+  val destTile = destRoute.io.dest
+
+  val srcRoute = Module(new RouteComputation())
+  srcRoute.io.xCur := tileX
+  srcRoute.io.yCur := tileY
+  srcRoute.io.xDest := inEast.io.xSender
+  srcRoute.io.yDest := inEast.io.ySender
+  val srcTile = srcRoute.io.dest
 
   // val inNorth = Module(new InputPort(4))
   // inNorth.io.fifo.in.bits := io.inData(1)
@@ -67,8 +75,9 @@ class RouterTest(r: Router) extends Tester(r) {
   expect(inEastOut == packet, "Packet matches inEast.in")
 
   // Check that the RouteComputation module calculates the right
-  // destination for this packet
-  expect(r.routing.io.dest, East.litValue)
+  // destination and source tile for this packet
+  expect(r.destTile, East.litValue)
+  expect(r.srcTile, Local.litValue)
   // Cycle 2: Data reaches the output of the output port (to send it
   // further on to the network)
   step(1)
