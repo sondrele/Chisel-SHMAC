@@ -30,7 +30,6 @@ class Router(x: Int, y: Int) extends Module {
   outEast.io.fifo.out.ready := io.outReady(0)
 
   io.inReady(0) := inEast.io.fifo.in.ready
-  io.outData(0) := outEast.io.fifo.out.bits
 
   val destRoute = Module(new RouteComputation())
   destRoute.io.xCur := tileX
@@ -46,16 +45,18 @@ class Router(x: Int, y: Int) extends Module {
   srcRoute.io.yDest := inEast.io.ySender
   val srcTile = srcRoute.io.dest
 
-  // val inNorth = Module(new InputPort(4))
-  // inNorth.io.fifo.in.bits := io.inData(1)
-  // val outNorth = Module(new OutputPort(4))
-  // io.outData(1) := outNorth.io.fifo.out.bits
+  val crossBar = Module(new CrossBar())
+  crossBar.io.inData(0) := inEast.io.fifo.out.bits
+  crossBar.io.fromDir := srcTile
+  crossBar.io.toDir := destTile
+
+  io.outData(0) := crossBar.io.outData(0)
 }
 
 class RouterTest(r: Router) extends Tester(r) {
   // Test to see that data travels through the router in one cycle
   // Initialize router input data in east direction
-  val packet = PacketData.create(address = 10, xDest = 1).litValue()
+  val packet = PacketData.create(address = 10, xDest = 1, xSender = 1).litValue()
   poke(r.io.inData(0), packet)
   poke(r.io.inRequest(0), 1)
   poke(r.io.outReady(0), 1)
@@ -66,21 +67,21 @@ class RouterTest(r: Router) extends Tester(r) {
   expect(r.inEast.io.fifo.out.bits, 0)
   expect(routerIn == packet, "Packet matches inEast.in")
   step(1)
-  // Cycle 1: Data is at head in input port and traverses to input of
-  // the output port
 
+  // Cycle 1: Data is at head in input port and traverses through crossbar
   val inEastOut = peek(r.inEast.io.fifo.out.bits)
   expect(r.outEast.io.fifo.in.bits, inEastOut)
   expect(r.outEast.io.fifo.out.bits, 0)
   expect(inEastOut == packet, "Packet matches inEast.in")
 
-  // Check that the RouteComputation module calculates the right
+  // Check that the RouteComputation module has calculated the right
   // destination and source tile for this packet
   expect(r.destTile, East.litValue)
-  expect(r.srcTile, Local.litValue)
+  expect(r.srcTile, East.litValue)
+  step(1)
+
   // Cycle 2: Data reaches the output of the output port (to send it
   // further on to the network)
-  step(1)
   val outEastOut = peek(r.outEast.io.fifo.out.bits)
   expect(r.io.outData(0), outEastOut)
   expect(outEastOut == packet, "Packet matches outEast.out")
