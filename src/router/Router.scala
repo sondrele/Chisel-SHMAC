@@ -2,28 +2,30 @@ package router
 
 import Chisel._
 
+class RouterIO(numPorts: Int) extends Bundle {
+  val inRequest = Vec.fill(numPorts) { Bool(INPUT) } // Request to write into router
+  val inData = Vec.fill(numPorts) { PacketData(INPUT) } // Data to write
+  val inReady = Vec.fill(numPorts) { Bool(OUTPUT) } // True if input port is not full
+  val outRequest = Vec.fill(numPorts) { Bool(OUTPUT) } // Router requesting to send data
+  val outData = Vec.fill(numPorts) { PacketData(OUTPUT) } // Data to send
+  val outReady = Vec.fill(numPorts) { Bool(INPUT) } // True to request output to send data
+}
+
 class Router extends Module {
   val numPorts = 1
-  val io = new Bundle {
-    val inRequest = Vec.fill(numPorts) { Bool(INPUT) } // Request to write into router
-    val inData = Vec.fill(numPorts) { PacketData(INPUT) } // Data to write
-    val inReady = Vec.fill(numPorts) { Bool(OUTPUT) } // True if input port is not full
-    val outRequest = Vec.fill(numPorts) { Bool(OUTPUT) } // Router requesting to send data
-    val outData = Vec.fill(numPorts) { PacketData(OUTPUT) } // Data to send
-    val outReady = Vec.fill(numPorts) { Bool(INPUT) } // True to request output to send data
-  }
+  val io = new RouterIO(numPorts)
 
   val inEast = Module(new InputPort(4))
   inEast.io.fifo.in.bits := io.inData(0)
   inEast.io.fifo.in.valid := io.inRequest(0)
-  inEast.io.fifo.out.ready := Bool(true)
-  io.inReady(0) := inEast.io.fifo.in.ready
+  inEast.io.fifo.out.ready := Bool(true) // Router instance always ready to read input
 
   val outEast = Module(new OutputPort(4))
   outEast.io.fifo.in.bits := inEast.io.fifo.out.bits
-  outEast.io.fifo.in.valid := Bool(true)
-  outEast.io.fifo.out.ready := Bool(true)
+  outEast.io.fifo.in.valid := Bool(true) // Router instance always writing output
+  outEast.io.fifo.out.ready := io.outReady(0)
 
+  io.inReady(0) := inEast.io.fifo.in.ready
   io.outData(0) := outEast.io.fifo.out.bits
 
   // val inNorth = Module(new InputPort(4))
