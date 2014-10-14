@@ -2,7 +2,7 @@ package router
 
 import Chisel._
 
-class RoutingXY() extends Module {
+class RouteComputation() extends Module {
   val io = new Bundle() {
     val xCur  = UInt(INPUT, width=4)
     val xDest = UInt(INPUT, width=4)
@@ -33,7 +33,7 @@ class RoutingXY() extends Module {
   }
 }
 
-class RoutingXYTest(xy: RoutingXY) extends Tester(xy) {
+class RouteComputationTest(xy: RouteComputation) extends Tester(xy) {
   poke(xy.io.xDest, 1)
   poke(xy.io.yDest, 1)
 

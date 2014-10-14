@@ -13,20 +13,23 @@ class RouterIO(numPorts: Int) extends Bundle {
 
 class Router extends Module {
   val numPorts = 1
+  val numRecords = 4
   val io = new RouterIO(numPorts)
 
-  val inEast = Module(new InputPort(4))
+  val inEast = Module(new InputPort(numRecords))
   inEast.io.fifo.in.bits := io.inData(0)
   inEast.io.fifo.in.valid := io.inRequest(0)
   inEast.io.fifo.out.ready := Bool(true) // Router instance always ready to read input
 
-  val outEast = Module(new OutputPort(4))
+  val outEast = Module(new OutputPort(numRecords))
   outEast.io.fifo.in.bits := inEast.io.fifo.out.bits
   outEast.io.fifo.in.valid := Bool(true) // Router instance always writing output
   outEast.io.fifo.out.ready := io.outReady(0)
 
   io.inReady(0) := inEast.io.fifo.in.ready
   io.outData(0) := outEast.io.fifo.out.bits
+
+  val routing = Module(new RouteComputation())
 
   // val inNorth = Module(new InputPort(4))
   // inNorth.io.fifo.in.bits := io.inData(1)

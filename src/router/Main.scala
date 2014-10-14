@@ -7,7 +7,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val testArgs = args.slice(1, args.length)
-    val modules = Array("RoutingXY", "Fifo", "InputPort", "OutputPort", "CrossBar", "RoutingArbiter")
+    val modules = Array("RouteComputation", "Fifo", "InputPort", "OutputPort", "CrossBar", "RoutingArbiter")
 
     args(0) match {
       case "testall" => testModules(modules, testArgs)
@@ -20,8 +20,8 @@ object Main {
   }
 
   def testModule(module: String, args: Array[String]) = module match {
-    case "RoutingXY" => chiselMainTest(args, () => Module(new RoutingXY())) {
-      r => new RoutingXYTest(r)
+    case "RouteComputation" => chiselMainTest(args, () => Module(new RouteComputation())) {
+      r => new RouteComputationTest(r)
     }
     case "Fifo" => chiselMainTest(args, () => Module(new Fifo(PacketData(), 4))) {
       f => new FifoTest(f)
