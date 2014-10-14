@@ -2,9 +2,11 @@ package router
 
 import Chisel._
 
-abstract class TileDir {
+trait TileDir {
   val index: Int
   val value: UInt
+
+  def litValue = value.litValue()
 }
 
 object TileDir {
