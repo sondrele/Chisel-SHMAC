@@ -5,12 +5,12 @@ import Chisel._
 class Router extends Module {
   val numPorts = 1
   val io = new Bundle {
-    val inRequest = Vec.fill(numPorts) { Bool(INPUT) } // Request to write
+    val inRequest = Vec.fill(numPorts) { Bool(INPUT) } // Request to write into router
     val inData = Vec.fill(numPorts) { PacketData(INPUT) } // Data to write
     val inReady = Vec.fill(numPorts) { Bool(OUTPUT) } // True if input port is not full
-    val outRequest = Vec.fill(numPorts) { Bool(OUTPUT) }
-    val outData = Vec.fill(numPorts) { PacketData(OUTPUT) }
-    val outReady = Vec.fill(numPorts) { Bool(INPUT) }
+    val outRequest = Vec.fill(numPorts) { Bool(OUTPUT) } // Router requesting to send data
+    val outData = Vec.fill(numPorts) { PacketData(OUTPUT) } // Data to send
+    val outReady = Vec.fill(numPorts) { Bool(INPUT) } // True to request output to send data
   }
 
   val inEast = Module(new InputPort(4))
@@ -38,6 +38,7 @@ class RouterTest(r: Router) extends Tester(r) {
   val packet = PacketData.create(address = 10).litValue()
   poke(r.io.inData(0), packet)
   poke(r.io.inRequest(0), 1)
+  poke(r.io.outReady(0), 1)
   expect(r.io.inRequest(0), 1)
 
   // Cycle 0: Data arrives router and input port
