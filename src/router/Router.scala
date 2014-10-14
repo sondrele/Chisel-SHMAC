@@ -5,18 +5,19 @@ import Chisel._
 class Router extends Module {
   val numPorts = 1
   val io = new Bundle {
-    val inRequests = UInt(INPUT, width = numPorts)
-    val inReady = Vec.fill(numPorts) { Bool(INPUT) }
-    val inData = Vec.fill(numPorts) { PacketData(INPUT) }
-    val outRequests = UInt(OUTPUT, width = numPorts)
-    val outReady = Vec.fill(numPorts) { Bool(OUTPUT) }
+    val inRequest = Vec.fill(numPorts) { Bool(INPUT) } // Request to write
+    val inData = Vec.fill(numPorts) { PacketData(INPUT) } // Data to write
+    val inReady = Vec.fill(numPorts) { Bool(OUTPUT) } // True if input port is not full
+    val outRequest = Vec.fill(numPorts) { Bool(OUTPUT) }
     val outData = Vec.fill(numPorts) { PacketData(OUTPUT) }
+    val outReady = Vec.fill(numPorts) { Bool(INPUT) }
   }
 
   val inEast = Module(new InputPort(4))
   inEast.io.fifo.in.bits := io.inData(0)
-  inEast.io.fifo.in.valid := io.inReady(0)
+  inEast.io.fifo.in.valid := io.inRequest(0)
   inEast.io.fifo.out.ready := Bool(true)
+  io.inReady(0) := inEast.io.fifo.in.ready
 
   val outEast = Module(new OutputPort(4))
   outEast.io.fifo.in.bits := inEast.io.fifo.out.bits
@@ -36,7 +37,8 @@ class RouterTest(r: Router) extends Tester(r) {
   // Initialize router input data in east direction
   val packet = PacketData.create(address = 10).litValue()
   poke(r.io.inData(0), packet)
-  poke(r.io.inReady(0), 1)
+  poke(r.io.inRequest(0), 1)
+  expect(r.io.inRequest(0), 1)
 
   // Cycle 0: Data arrives router and input port
   val routerIn = peek(r.io.inData(0))
