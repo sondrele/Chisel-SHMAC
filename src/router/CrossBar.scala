@@ -2,15 +2,17 @@ package router
 
 import Chisel._
 
-class CrossBar extends Module {
-  val io = new Bundle {
-    val inData  = Vec.fill(5) { UInt(INPUT, width = 32) }
-    val fromDir = UInt(INPUT, width = 5)
-    val toDir   = UInt(INPUT, width = 5)
-    val outData = Vec.fill(5) { UInt(OUTPUT, width = 32) }
-  }
+class CrossBarIO extends Bundle {
+  val inData  = Vec.fill(5) { PacketData(INPUT) }
+  val fromDir = UInt(INPUT, width = 5)
+  val toDir   = UInt(INPUT, width = 5)
+  val outData = Vec.fill(5) { PacketData(OUTPUT) }
+}
 
-  val inData = UInt(width = 32)
+class CrossBar extends Module {
+  val io = new CrossBarIO()
+
+  val inData = PacketData()
   when(io.fromDir === East.value) {
     inData := io.inData(East.index)
   }.elsewhen(io.fromDir === North.value) {
