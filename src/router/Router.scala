@@ -11,7 +11,10 @@ class RouterIO(numPorts: Int) extends Bundle {
   val outReady = Vec.fill(numPorts) { Bool(INPUT) } // True to request output to send data
 }
 
-class Router extends Module {
+class Router(x: Int, y: Int) extends Module {
+  val tileX = UInt(x, width = 4)
+  val tileY = UInt(y, width = 4)
+
   val numPorts = 1
   val numRecords = 4
   val io = new RouterIO(numPorts)
@@ -30,6 +33,10 @@ class Router extends Module {
   io.outData(0) := outEast.io.fifo.out.bits
 
   val routing = Module(new RouteComputation())
+  routing.io.xCur := tileX
+  routing.io.yCur := tileY
+  routing.io.xDest := inEast.io.xDest
+  routing.io.yDest := inEast.io.yDest
 
   // val inNorth = Module(new InputPort(4))
   // inNorth.io.fifo.in.bits := io.inData(1)
@@ -40,11 +47,10 @@ class Router extends Module {
 class RouterTest(r: Router) extends Tester(r) {
   // Test to see that data travels through the router in one cycle
   // Initialize router input data in east direction
-  val packet = PacketData.create(address = 10).litValue()
+  val packet = PacketData.create(address = 10, xDest = 1).litValue()
   poke(r.io.inData(0), packet)
   poke(r.io.inRequest(0), 1)
   poke(r.io.outReady(0), 1)
-  expect(r.io.inRequest(0), 1)
 
   // Cycle 0: Data arrives router and input port
   val routerIn = peek(r.io.inData(0))
@@ -54,10 +60,15 @@ class RouterTest(r: Router) extends Tester(r) {
   step(1)
   // Cycle 1: Data is at head in input port and traverses to input of
   // the output port
+
   val inEastOut = peek(r.inEast.io.fifo.out.bits)
   expect(r.outEast.io.fifo.in.bits, inEastOut)
   expect(r.outEast.io.fifo.out.bits, 0)
   expect(inEastOut == packet, "Packet matches inEast.in")
+
+  // Check that the RouteComputation module calculates the right
+  // destination for this packet
+  expect(r.routing.io.dest, East.litValue)
   // Cycle 2: Data reaches the output of the output port (to send it
   // further on to the network)
   step(1)
