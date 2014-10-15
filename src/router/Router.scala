@@ -24,12 +24,14 @@ class Router(x: Int, y: Int) extends Module {
   inEast.io.fifo.in.valid := io.inRequest(0)
   inEast.io.fifo.out.ready := Bool(true) // Router instance always ready to read input
 
+  io.inReady(0) := inEast.io.fifo.in.ready
+
   val outEast = Module(new OutputPort(numRecords))
   // outEast.io.fifo.in.bits := inEast.io.fifo.out.bits
   outEast.io.fifo.in.valid := Bool(true) // Router instance always writing output
   outEast.io.fifo.out.ready := io.outReady(0)
 
-  io.inReady(0) := inEast.io.fifo.in.ready
+  io.outRequest(0) := outEast.io.fifo.out.valid
 
   val destRoute = Module(new RouteComputation())
   destRoute.io.xCur := tileX
@@ -75,20 +77,25 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.inEast.io.fifo.in.bits, routerIn)
     expect(r.inEast.io.fifo.out.bits, 0)
     expect(routerIn == packet, "Packet matches inEast.in")
-    peek(r.grantedPort)
+    expect(r.io.outRequest(0), 0) // output port shoule be empty
     step(1)
+    // Stop sending data
+    poke(r.io.inRequest(0), 0)
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
     val inEastOut = peek(r.inEast.io.fifo.out.bits)
     expect(r.outEast.io.fifo.in.bits, inEastOut)
     expect(r.outEast.io.fifo.out.bits, 0)
     expect(inEastOut == packet, "Packet matches inEast.in")
-    peek(r.grantedPort)
+    // expect(r.io.outRequest(0), 0) // output port shoule be empty
 
     // Check that the RouteComputation module has calculated the right
     // destination and source tile for this packet
     expect(r.destTile, East.litValue)
     expect(r.srcTile, East.litValue)
+
+    // The port granted to send over the crossbar should be inEast
+    expect(r.grantedPort, East.litValue)
     step(1)
 
     // Cycle 2: Data reaches the output of the output port (to send it
@@ -96,6 +103,7 @@ class RouterTest(r: Router) extends Tester(r) {
     val outEastOut = peek(r.outEast.io.fifo.out.bits)
     expect(r.io.outData(0), outEastOut)
     expect(outEastOut == packet, "Packet matches outEast.out")
+    expect(r.io.outRequest(0), 1)
     peek(r.grantedPort)
   }
 
