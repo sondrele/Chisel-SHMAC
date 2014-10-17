@@ -47,8 +47,8 @@ class Router(x: Int, y: Int) extends Module {
 
   val crossBar = Module(new CrossBar())
   crossBar.io.inData(0) := inEast.io.fifo.out.bits
-  crossBar.io.fromDir := srcTile
-  crossBar.io.toDir := destTile
+  // crossBar.io.fromDir := srcTile
+  // crossBar.io.toDir := destTile
 
   io.outData(0) := crossBar.io.outData(0)
 }

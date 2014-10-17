@@ -3,45 +3,73 @@ package router
 import Chisel._
 
 class CrossBarIO extends Bundle {
-  val inData  = Vec.fill(5) { PacketData(INPUT) }
-  val fromDir = UInt(INPUT, width = 5)
-  val toDir   = UInt(INPUT, width = 5)
+  val inData = Vec.fill(5) { PacketData(INPUT) }
+  val select = Vec.fill(5) { UInt(INPUT, width = 5) }
   val outData = Vec.fill(5) { PacketData(OUTPUT) }
 }
 
 class CrossBar extends Module {
   val io = new CrossBarIO()
 
+  val fromEast  = io.select(0)
+  val fromNorth = io.select(1)
+  val fromWest  = io.select(2)
+  val fromSouth = io.select(3)
+  val fromLocal = io.select(4)
+
+  // Find out which input ports sends data
+  val filter = UInt()
   val inData = PacketData()
-  when(io.fromDir === East.value) {
+  when(fromEast != UInt(0)) {
+    filter := fromEast
     inData := io.inData(East.index)
-  }.elsewhen(io.fromDir === North.value) {
+  }.elsewhen(fromNorth != UInt(0)) {
+    filter := fromNorth
     inData := io.inData(North.index)
-  }.elsewhen(io.fromDir === West.value) {
+  }.elsewhen(fromWest != UInt(0)) {
+    filter := fromWest
     inData := io.inData(West.index)
-  }.elsewhen(io.fromDir === South.value) {
+  }.elsewhen(fromSouth != UInt(0)) {
+    filter := fromSouth
     inData := io.inData(South.index)
-  }.elsewhen(io.fromDir === Local.value) {
+  }.elsewhen(fromLocal != UInt(0)) {
+    filter := fromLocal
     inData := io.inData(Local.index)
   }.otherwise {
+    filter := UInt(0)
     inData := UInt(0)
   }
 
   // Default all outputs to 0
   for (i <- 0 until 5) {
     io.outData(i) := UInt(0)
-  }
 
-  switch(io.toDir) {
-    is(East.value)  { io.outData(East.index)  := inData }
-    is(North.value) { io.outData(North.index) := inData }
-    is(West.value)  { io.outData(West.index)  := inData }
-    is(South.value) { io.outData(South.index) := inData }
-    is(Local.value) { io.outData(Local.index) := inData }
+    when(filter(i) === UInt(1)) {
+      io.outData(i) := inData
+    }
   }
 }
 
 class CrossBarTest(c: CrossBar) extends Tester(c) {
+
+  def testCrossBar(from: TileDir, to: TileDir, value: Int) {
+    for (i <- 0 until 5) {
+      if (i == from.index) {
+        poke(c.io.select(i), to.litValue)
+      } else {
+        poke(c.io.select(i), 0)
+      }
+    }
+
+    for (i <- 0 until 5) {
+      if (i == to.index) {
+        expect(c.io.outData(i), value)
+      } else {
+        expect(c.io.outData(i), 0)
+      }
+    }
+  }
+
   poke(c.io.inData(East.index), 1)
   poke(c.io.inData(North.index), 2)
   poke(c.io.inData(West.index), 3)
@@ -49,13 +77,8 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
   poke(c.io.inData(Local.index), 5)
   step(1)
 
-  def testCrossBar(from: TileDir, to: TileDir, value: Int) = {
-    poke(c.io.fromDir, from.value.litValue())
-    poke(c.io.toDir,   to.value.litValue())
-    expect(c.io.outData(to.index), value)
-    expect(c.io.outData(from.index), 0)
-  }
-
+  testCrossBar(East, East, 1)
+  testCrossBar(North, East, 2)
   testCrossBar(East, South, 1)
   testCrossBar(North, East,  2)
   testCrossBar(West,  North, 3)
