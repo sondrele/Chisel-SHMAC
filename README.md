@@ -2,7 +2,7 @@ chisel-router
 =============
 Run all tests
 
-```$ make test```
+```$ make testall```
 
 Test a single module, e.g.
 
