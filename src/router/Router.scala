@@ -33,19 +33,12 @@ class Router(x: Int, y: Int) extends Module {
 
   io.outRequest(0) := outEast.io.fifo.out.valid
 
-  val destRoute = Module(new RouteComputation())
-  destRoute.io.xCur := tileX
-  destRoute.io.yCur := tileY
-  destRoute.io.xDest := inEast.io.xDest
-  destRoute.io.yDest := inEast.io.yDest
-  val destTile = destRoute.io.dest
-
-  val srcRoute = Module(new RouteComputation())
-  srcRoute.io.xCur := tileX
-  srcRoute.io.yCur := tileY
-  srcRoute.io.xDest := inEast.io.xSender
-  srcRoute.io.yDest := inEast.io.ySender
-  val srcTile = srcRoute.io.dest
+  val eastRouter = Module(new RouteComputation())
+  eastRouter.io.xCur := tileX
+  eastRouter.io.yCur := tileY
+  eastRouter.io.xDest := inEast.io.xDest
+  eastRouter.io.yDest := inEast.io.yDest
+  val eastOutputDir = eastRouter.io.dest
 
   val arbiter = Module(new DirectionArbiter(numPorts))
   arbiter.io.isEmpty(0) := !inEast.io.fifo.out.valid
@@ -55,8 +48,7 @@ class Router(x: Int, y: Int) extends Module {
 
   val crossBar = Module(new CrossBar())
   crossBar.io.inData(0) := inEast.io.fifo.out.bits
-  crossBar.io.fromDir := srcTile
-  crossBar.io.toDir := destTile
+  crossBar.io.select(0) := eastOutputDir
 
   outEast.io.fifo.in.bits := crossBar.io.outData(0) // Use IndexOf(grantedPort) instead
   io.outData(0) := outEast.io.fifo.out.bits
@@ -90,9 +82,8 @@ class RouterTest(r: Router) extends Tester(r) {
     // expect(r.io.outRequest(0), 0) // output port shoule be empty
 
     // Check that the RouteComputation module has calculated the right
-    // destination and source tile for this packet
-    expect(r.destTile, East.litValue)
-    expect(r.srcTile, East.litValue)
+    // direction tile for this packet
+    expect(r.eastOutputDir, East.litValue)
 
     // The port granted to send over the crossbar should be inEast
     expect(r.grantedPort, East.litValue)
