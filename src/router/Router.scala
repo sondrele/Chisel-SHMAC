@@ -15,7 +15,7 @@ class Router(x: Int, y: Int) extends Module {
   val tileX = UInt(x, width = 4)
   val tileY = UInt(y, width = 4)
 
-  val numPorts = 1
+  val numPorts = 2
   val numRecords = 4
 
   val io = new RouterIO(numPorts)
@@ -23,8 +23,12 @@ class Router(x: Int, y: Int) extends Module {
 
   val arbiterEast = Module(new DirectionArbiter(numPorts)).io
   val grantedPortEast = arbiterEast.granted
+  val arbiterNorth = Module(new DirectionArbiter(numPorts)).io
+  val grantedPortNorth = arbiterNorth.granted
 
   val east = Module(new DirectionRouter(tileX, tileY, numRecords)).io
+  val north = Module(new DirectionRouter(tileX, tileY, numRecords)).io
+
   east.inRequest := io.inRequest(0)
   east.inData := io.inData(0)
   crossbar.inData(0) := east.crossbarIn
@@ -34,9 +38,28 @@ class Router(x: Int, y: Int) extends Module {
   east.crossbarOut := crossbar.outData(0)
   east.outReady := io.outReady(0)
   crossbar.select(0) := east.destTile
+
+  north.inRequest := io.inRequest(1)
+  north.inData := io.inData(1)
+  crossbar.inData(1) := north.crossbarIn
+  io.inReady(1) := north.inReady
+  io.outRequest(1) := north.outRequest
+  io.outData(1) := north.outData
+  north.crossbarOut := crossbar.outData(1)
+  north.outReady := io.outReady(1)
+  crossbar.select(1) := north.destTile
+
   arbiterEast.isEmpty(0) := east.isEmpty
+  arbiterEast.isEmpty(1) := north.isEmpty
   arbiterEast.requesting(0) := east.requesting
+  arbiterEast.requesting(1) := north.requesting
   arbiterEast.isFull := east.isFull
+
+  arbiterNorth.isEmpty(0) := east.isEmpty
+  arbiterNorth.isEmpty(1) := north.isEmpty
+  arbiterNorth.requesting(0) := east.requesting
+  arbiterNorth.requesting(1) := north.requesting
+  arbiterNorth.isFull := north.isFull
 }
 
 
@@ -55,7 +78,7 @@ class RouterTest(r: Router) extends Tester(r) {
     // expect(r.inEast.io.fifo.in.bits, routerIn)
     // expect(r.inEast.io.fifo.out.bits, 0)
     expect(routerIn == packet, "Packet matches inEast.in")
-    expect(r.io.outRequest(0), 0) // output port shoule be empty
+    expect(r.io.outRequest(0), 0) // output port should be empty
     step(1)
     // Stop sending data
     poke(r.io.inRequest(0), 0)
