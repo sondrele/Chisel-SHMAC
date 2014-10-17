@@ -11,28 +11,26 @@ class CrossBarIO extends Bundle {
 class CrossBar extends Module {
   val io = new CrossBarIO()
 
-  val fromEast  = io.select(East.index) != UInt(0)
-  val fromNorth = io.select(North.index) != UInt(0)
-  val fromWest  = io.select(West.index) != UInt(0)
-  val fromSouth = io.select(South.index) != UInt(0)
-  val fromLocal = io.select(Local.index) != UInt(0)
+  def fromDir(dir: TileDir): Bool = {
+    io.select(dir.index) != UInt(0)
+  }
 
   // Find out which input ports sends data
   val filter = UInt()
   val inData = PacketData()
-  when(fromEast) {
+  when(fromDir(East)) {
     filter := io.select(East.index)
     inData := io.inData(East.index)
-  }.elsewhen(fromNorth) {
+  }.elsewhen(fromDir(North)) {
     filter := io.select(North.index)
     inData := io.inData(North.index)
-  }.elsewhen(fromWest) {
+  }.elsewhen(fromDir(West)) {
     filter := io.select(West.index)
     inData := io.inData(West.index)
-  }.elsewhen(fromSouth) {
+  }.elsewhen(fromDir(South)) {
     filter := io.select(South.index)
     inData := io.inData(South.index)
-  }.elsewhen(fromLocal) {
+  }.elsewhen(fromDir(Local)) {
     filter := io.select(Local.index)
     inData := io.inData(Local.index)
   }.otherwise {
