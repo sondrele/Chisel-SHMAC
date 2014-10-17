@@ -11,9 +11,8 @@ class DirectionRouterIO extends Bundle {
   val outData = PacketData(OUTPUT)
   val crossbarOut = PacketData(INPUT)
   val outReady = Bool(INPUT)
-  // Destination and Sender of the packet
+  // Destination of the packet
   val destTile = UInt(OUTPUT, width = 5)
-  val srcTile = UInt(OUTPUT, width = 5)
   // Signals to arbiter
   val isEmpty = Bool(OUTPUT)
   val requesting = Bool(OUTPUT)
@@ -43,13 +42,6 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
   destRoute.io.xDest := input.io.xDest
   destRoute.io.yDest := input.io.yDest
   io.destTile := destRoute.io.dest
-
-  val srcRoute = Module(new RouteComputation())
-  srcRoute.io.xCur := tileX
-  srcRoute.io.yCur := tileY
-  srcRoute.io.xDest := input.io.xSender
-  srcRoute.io.yDest := input.io.ySender
-  io.srcTile := srcRoute.io.dest
 
   io.isEmpty := !input.io.fifo.out.valid
   io.requesting := input.io.fifo.out.valid && input.io.fifo.out.ready
