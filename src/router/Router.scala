@@ -31,24 +31,16 @@ class Router(x: Int, y: Int) extends Module {
 
   io.inReady(0) := inEast.io.fifo.in.ready
 
-  val destRoute = Module(new RouteComputation())
-  destRoute.io.xCur := tileX
-  destRoute.io.yCur := tileY
-  destRoute.io.xDest := inEast.io.xDest
-  destRoute.io.yDest := inEast.io.yDest
-  val destTile = destRoute.io.dest
-
-  val srcRoute = Module(new RouteComputation())
-  srcRoute.io.xCur := tileX
-  srcRoute.io.yCur := tileY
-  srcRoute.io.xDest := inEast.io.xSender
-  srcRoute.io.yDest := inEast.io.ySender
-  val srcTile = srcRoute.io.dest
+  val eastRouter = Module(new RouteComputation())
+  eastRouter.io.xCur := tileX
+  eastRouter.io.yCur := tileY
+  eastRouter.io.xDest := inEast.io.xDest
+  eastRouter.io.yDest := inEast.io.yDest
+  val eastOutputDir = eastRouter.io.dest
 
   val crossBar = Module(new CrossBar())
   crossBar.io.inData(0) := inEast.io.fifo.out.bits
-  // crossBar.io.fromDir := srcTile
-  // crossBar.io.toDir := destTile
+  crossBar.io.select(0) := eastOutputDir
 
   io.outData(0) := crossBar.io.outData(0)
 }
@@ -76,8 +68,7 @@ class RouterTest(r: Router) extends Tester(r) {
 
   // Check that the RouteComputation module has calculated the right
   // destination and source tile for this packet
-  expect(r.destTile, East.litValue)
-  expect(r.srcTile, East.litValue)
+  expect(r.eastOutputDir, East.litValue)
   step(1)
 
   // Cycle 2: Data reaches the output of the output port (to send it
