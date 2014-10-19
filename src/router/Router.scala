@@ -89,8 +89,8 @@ class RouterTest(r: Router) extends Tester(r) {
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
     // The port granted to send over the crossbar should be inEast
-    expect(r.grantedPortEast, North.litValue)
-    peek(r.grantedPortNorth)
+    expect(r.grantedPortNorth, East.litValue)
+    peek(r.grantedPortEast)
     step(1)
 
     // Cycle 2: Data reaches the output of the output port, to send it
