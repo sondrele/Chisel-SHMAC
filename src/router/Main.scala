@@ -44,7 +44,7 @@ object Main {
     case "Packet" => chiselMainTest(args, () => Module(new PacketDataModule())) {
       b => new PacketDataModuleTest(b)
     }
-    case "Router" => chiselMainTest(args, () => Module(new Router(0, 0))) {
+    case "Router" => chiselMainTest(args, () => Module(new Router(1, 1))) {
       b => new RouterTest(b)
     }
     case other => sys.error(s"No module with name $other")

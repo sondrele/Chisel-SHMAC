@@ -64,36 +64,41 @@ class Router(x: Int, y: Int) extends Module {
   arbiterNorth.isFull := north.isFull
 }
 
-
 class RouterTest(r: Router) extends Tester(r) {
 
-  def testDataPathFromEastToEastWithOnePort() {
-    // Test to see that data travels through the router in one cycle
-    // Initialize router input data in east direction
-    val packet = PacketData.create(address = 10, xDest = 1, xSender = 1).litValue()
+  def testDataPathFromEastToNorth() {
+    val packet = PacketData.create(
+      address = 15,
+      xDest = 1,
+      yDest = 0,
+      xSender = 2,
+      ySender = 1
+    ).litValue()
+
     poke(r.io.inData(0), packet)
     poke(r.io.inRequest(0), 1)
-    poke(r.io.outReady(0), 1)
+    poke(r.io.outReady(1), 1)
 
     // Cycle 0: Data arrives router and input port
     val routerIn = peek(r.io.inData(0))
     expect(routerIn == packet, "Packet matches inEast.in")
-    expect(r.io.outRequest(0), 0) // output port should be empty
+    expect(r.io.outRequest(1), 0) // output port should be empty
     step(1)
     // Stop sending data
     poke(r.io.inRequest(0), 0)
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
     // The port granted to send over the crossbar should be inEast
-    expect(r.grantedPortEast, East.litValue)
+    expect(r.grantedPortEast, North.litValue)
     peek(r.grantedPortNorth)
     step(1)
 
-    // Cycle 2: Data reaches the output of the output port (to send it
-    // further on to the network)
-    expect(r.io.outData(0), packet)//outEastOut)
-    expect(r.io.outRequest(0), 1)
+    // Cycle 2: Data reaches the output of the output port, to send it
+    // further on to the network
+    peek(r.io.outData)
+    expect(r.io.outData(1), packet)
+    expect(r.io.outRequest(1), 1)
   }
 
-  testDataPathFromEastToEastWithOnePort()
+  testDataPathFromEastToNorth()
 }
