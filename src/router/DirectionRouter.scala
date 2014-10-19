@@ -5,6 +5,7 @@ import Chisel._
 class DirectionRouterIO extends Bundle {
   val inRequest = Bool(INPUT)
   val inData = PacketData(INPUT)
+  val inRead = Bool(INPUT)
   val crossbarIn = PacketData(OUTPUT)
   val inReady = Bool(OUTPUT)
   val outRequest = Bool(OUTPUT)
@@ -24,7 +25,7 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
 
   val input = Module(new InputPort(numRecords))
   input.io.fifo.in.valid := io.inRequest
-  input.io.fifo.out.ready := Bool(true) // Router instance always ready to read input
+  input.io.fifo.out.ready := io.inRead // Bool(true) // read only when grt_to_out_ports for this instance is true
   input.io.fifo.in.bits := io.inData
   io.inReady := input.io.fifo.in.ready
   io.crossbarIn := input.io.fifo.out.bits

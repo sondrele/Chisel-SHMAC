@@ -31,6 +31,7 @@ class Router(x: Int, y: Int) extends Module {
 
   east.inRequest := io.inRequest(0)
   east.inData := io.inData(0)
+  east.inRead := grantedPortNorth(0) | grantedPortEast(0)
   crossbar.inData(0) := east.crossbarIn
   io.inReady(0) := east.inReady
   io.outRequest(0) := east.outRequest
@@ -41,6 +42,7 @@ class Router(x: Int, y: Int) extends Module {
 
   north.inRequest := io.inRequest(1)
   north.inData := io.inData(1)
+  north.inRead := grantedPortNorth(1) | grantedPortEast(1)
   crossbar.inData(1) := north.crossbarIn
   io.inReady(1) := north.inReady
   io.outRequest(1) := north.outRequest
@@ -51,14 +53,14 @@ class Router(x: Int, y: Int) extends Module {
 
   arbiterEast.isEmpty(0) := east.isEmpty
   arbiterEast.isEmpty(1) := north.isEmpty
-  arbiterEast.requesting(0) := east.destTile(0) && east.requesting
-  arbiterEast.requesting(1) := north.destTile(0) && north.requesting
+  arbiterEast.requesting(0) := east.destTile(0) // && east.requesting <- combinational path
+  arbiterEast.requesting(1) := north.destTile(0) // && north.requesting
   arbiterEast.isFull := east.isFull
 
   arbiterNorth.isEmpty(0) := east.isEmpty
   arbiterNorth.isEmpty(1) := north.isEmpty
-  arbiterNorth.requesting(0) := east.destTile(1) && east.requesting
-  arbiterNorth.requesting(1) := north.destTile(1) && north.requesting
+  arbiterNorth.requesting(0) := east.destTile(1) // && east.requesting
+  arbiterNorth.requesting(1) := north.destTile(1) // && north.requesting
   arbiterNorth.isFull := north.isFull
 }
 
