@@ -36,6 +36,7 @@ class Router(x: Int, y: Int) extends Module {
   io.inReady(0) := east.inReady
   io.outRequest(0) := east.outRequest
   io.outData(0) := east.outData
+  east.outWrite := grantedPortEast > UInt(0)
   east.crossbarOut := crossbar.outData(0)
   east.outReady := io.outReady(0)
   crossbar.select(0) := grantedPortEast
@@ -47,20 +48,21 @@ class Router(x: Int, y: Int) extends Module {
   io.inReady(1) := north.inReady
   io.outRequest(1) := north.outRequest
   io.outData(1) := north.outData
+  north.outWrite := grantedPortNorth > UInt(0)
   north.crossbarOut := crossbar.outData(1)
   north.outReady := io.outReady(1)
   crossbar.select(1) := grantedPortNorth
 
   arbiterEast.isEmpty(0) := east.isEmpty
   arbiterEast.isEmpty(1) := north.isEmpty
-  arbiterEast.requesting(0) := east.destTile(0) // && east.requesting <- combinational path
-  arbiterEast.requesting(1) := north.destTile(0) // && north.requesting
+  arbiterEast.requesting(0) := east.direction(0) // && east.requesting <- combinational path
+  arbiterEast.requesting(1) := north.direction(0) // && north.requesting
   arbiterEast.isFull := east.isFull
 
   arbiterNorth.isEmpty(0) := east.isEmpty
   arbiterNorth.isEmpty(1) := north.isEmpty
-  arbiterNorth.requesting(0) := east.destTile(1) // && east.requesting
-  arbiterNorth.requesting(1) := north.destTile(1) // && north.requesting
+  arbiterNorth.requesting(0) := east.direction(1) // && east.requesting
+  arbiterNorth.requesting(1) := north.direction(1) // && north.requesting
   arbiterNorth.isFull := north.isFull
 }
 
@@ -95,6 +97,8 @@ class RouterTest(r: Router) extends Tester(r) {
 
     // Cycle 2: Data reaches the output of the output port, to send it
     // further on to the network
+    peek(r.grantedPortEast)
+    peek(r.grantedPortNorth)
     peek(r.io.outData)
     expect(r.io.outData(1), packet)
     expect(r.io.outRequest(1), 1)
