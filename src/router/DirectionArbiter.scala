@@ -30,7 +30,12 @@ class DirectionArbiter(numPorts: Int) extends Module {
 
   granted.ready := Bool(true)
   io.grantedReady := granted.valid
-  io.granted := granted.bits
+
+  when (granted.valid) {
+    io.granted := granted.bits
+  }.otherwise {
+    io.granted := UInt(0)
+  }
 
   // This arbiter is the consumer of the RRAbiter, which is the producer of
   // the granted 'bits', i.e. the granted input_port that can send to the

@@ -38,14 +38,10 @@ class Router(x: Int, y: Int) extends Module {
   io.inReady(0) := east.inReady
   io.outRequest(0) := east.outRequest
   io.outData(0) := east.outData
-  east.outWrite := grantedPortEast > UInt(0) && grantedPortEastReady
+  east.outWrite := grantedPortEastReady
   east.crossbarOut := crossbar.outData(0)
   east.outReady := io.outReady(0)
-  when (grantedPortEastReady) {
-    crossbar.select(0) := grantedPortEast
-  }.otherwise {
-    crossbar.select(0) := UInt(0)
-  }
+  crossbar.select(0) := grantedPortEast
 
   north.inRequest := io.inRequest(1)
   north.inData := io.inData(1)
@@ -54,14 +50,10 @@ class Router(x: Int, y: Int) extends Module {
   io.inReady(1) := north.inReady
   io.outRequest(1) := north.outRequest
   io.outData(1) := north.outData
-  north.outWrite := grantedPortNorth > UInt(0) && grantedPortNorthReady
+  north.outWrite := grantedPortNorthReady
   north.crossbarOut := crossbar.outData(1)
   north.outReady := io.outReady(1)
-  when (grantedPortNorthReady) {
-    crossbar.select(1) := grantedPortNorth
-  }.otherwise {
-    crossbar.select(1) := UInt(0)
-  }
+  crossbar.select(1) := grantedPortNorth
 
   arbiterEast.isEmpty(0) := east.isEmpty
   arbiterEast.isEmpty(1) := north.isEmpty
