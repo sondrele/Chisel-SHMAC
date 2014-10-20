@@ -95,11 +95,11 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outRequest(0), 0) // output port should be empty
     expect(r.io.outRequest(1), 0)
     expect(r.io.outData(0), 0)
-    expect(r.io.outData(0), 0)
+    expect(r.io.outData(1), 0)
 
-    peek(r.grantedPortNorth)
+    expect(r.grantedPortNorth, 0)
     expect(r.grantedPortNorthReady, 0)
-    peek(r.grantedPortEast)
+    expect(r.grantedPortEast, 0)
     expect(r.grantedPortEastReady, 0)
     expect(r.east.outWrite, 0)
     expect(r.north.outWrite, 0)
@@ -121,11 +121,11 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outRequest(0), 0) // output port should still be empty
     expect(r.io.outRequest(1), 0)
     expect(r.io.outData(0), 0)
-    expect(r.io.outData(0), 0)
+    expect(r.io.outData(1), 0)
 
     expect(r.grantedPortNorth, East.litValue)
     expect(r.grantedPortNorthReady, 1)
-    peek(r.grantedPortEast)
+    expect(r.grantedPortEast, 0)
     expect(r.grantedPortEastReady, 0)
     expect(r.east.outWrite, 0)
     expect(r.north.outWrite, 1)
@@ -134,11 +134,12 @@ class RouterTest(r: Router) extends Tester(r) {
 
     // Cycle 2: Data reaches the output of the output port, to send it
     // further on to the network
-    peek(r.grantedPortEast)
-    peek(r.grantedPortNorth)
-    peek(r.io.outData)
-    expect(r.io.outData(1), packetFromEastToNorth)
+    expect(r.io.inReady(0), 1)
+    expect(r.io.inReady(1), 1)
+    expect(r.io.outRequest(0), 0)
     expect(r.io.outRequest(1), 1)
+    expect(r.io.outData(0), 0)
+    expect(r.io.outData(1), packetFromEastToNorth)
   }
 
   testDataPathFromEastToNorth()
