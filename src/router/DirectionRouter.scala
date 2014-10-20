@@ -43,7 +43,11 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
   destRoute.yCur := tileY
   destRoute.xDest := input.xDest
   destRoute.yDest := input.yDest
-  io.direction := destRoute.dest
+  when (input.fifo.out.valid) {
+    io.direction := destRoute.dest
+  }.otherwise {
+    io.direction := UInt(0)
+  }
 
   io.isEmpty := !input.fifo.out.valid
   // io.requesting := input.fifo.out.valid && input.fifo.out.ready
@@ -79,8 +83,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.outWrite, 0)
   poke(a.io.crossbarOut, 0)
   poke(a.io.outReady, 0)
-  // Direction is west because location is (1, 1) and input.fifo has 0-value
-  expect(a.io.direction, West.litValue)
+  expect(a.io.direction, 0)
   expect(a.io.isEmpty, 1)
   expect(a.io.isFull, 0)
 
@@ -89,6 +92,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.inRequest, 1)
   poke(a.io.inData, packetFromNorthToNorth)
   poke(a.io.inRead, 1)
+  expect(a.input.fifo.out.bits, packetFromNorthToEast)
   expect(a.io.crossbarIn, packetFromNorthToEast)
   expect(a.io.inReady, 1)
   expect(a.io.outRequest, 0)
@@ -105,6 +109,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.inRequest, 0)
   poke(a.io.inData, 0)
   poke(a.io.inRead, 1)
+  expect(a.input.fifo.out.bits, packetFromNorthToNorth)
   expect(a.io.crossbarIn, packetFromNorthToNorth)
   expect(a.io.inReady, 1)
   expect(a.io.outRequest, 0)
@@ -121,6 +126,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.inRequest, 0)
   poke(a.io.inData, 0)
   poke(a.io.inRead, 0)
+  expect(a.input.fifo.out.bits, 0)
   expect(a.io.crossbarIn, 0)
   expect(a.io.inReady, 1)
   expect(a.io.outRequest, 1)
@@ -128,7 +134,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.outWrite, 0)
   poke(a.io.crossbarOut, 0)
   poke(a.io.outReady, 0)
-  expect(a.io.direction, West.litValue)
+  expect(a.io.direction, 0)
   expect(a.io.isEmpty, 1)
   expect(a.io.isFull, 0)
 }
