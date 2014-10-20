@@ -15,65 +15,132 @@ class Router(x: Int, y: Int) extends Module {
   val tileX = UInt(x, width = 4)
   val tileY = UInt(y, width = 4)
 
-  val numPorts = 1
+  val numPorts = 2
   val numRecords = 4
+
   val io = new RouterIO(numPorts)
+  val crossbar = Module(new CrossBar()).io
 
-  val inEast = Module(new InputPort(numRecords))
-  inEast.io.fifo.in.bits := io.inData(0)
-  inEast.io.fifo.in.valid := io.inRequest(0)
-  inEast.io.fifo.out.ready := Bool(true) // Router instance always ready to read input
+  val arbiterEast = Module(new DirectionArbiter(numPorts)).io
+  val grantedPortEast = arbiterEast.granted
+  val grantedPortEastReady = arbiterEast.grantedReady
+  val arbiterNorth = Module(new DirectionArbiter(numPorts)).io
+  val grantedPortNorth = arbiterNorth.granted
+  val grantedPortNorthReady = arbiterNorth.grantedReady
 
-  val outEast = Module(new OutputPort(numRecords))
-  outEast.io.fifo.in.bits := inEast.io.fifo.out.bits
-  outEast.io.fifo.in.valid := Bool(true) // Router instance always writing output
-  outEast.io.fifo.out.ready := io.outReady(0)
+  val east = Module(new DirectionRouter(tileX, tileY, numRecords)).io
+  val north = Module(new DirectionRouter(tileX, tileY, numRecords)).io
 
-  io.inReady(0) := inEast.io.fifo.in.ready
+  east.inRequest := io.inRequest(0)
+  east.inData := io.inData(0)
+  east.inRead := grantedPortNorth(0) | grantedPortEast(0) // fix signal
+  crossbar.inData(0) := east.crossbarIn
+  io.inReady(0) := east.inReady
+  io.outRequest(0) := east.outRequest
+  io.outData(0) := east.outData
+  east.outWrite := grantedPortEastReady
+  east.crossbarOut := crossbar.outData(0)
+  east.outReady := io.outReady(0)
+  crossbar.select(0) := grantedPortEast
 
-  val eastRouter = Module(new RouteComputation())
-  eastRouter.io.xCur := tileX
-  eastRouter.io.yCur := tileY
-  eastRouter.io.xDest := inEast.io.xDest
-  eastRouter.io.yDest := inEast.io.yDest
-  val eastOutputDir = eastRouter.io.dest
+  north.inRequest := io.inRequest(1)
+  north.inData := io.inData(1)
+  north.inRead := grantedPortNorth(1) | grantedPortEast(1) // fix signal
+  crossbar.inData(1) := north.crossbarIn
+  io.inReady(1) := north.inReady
+  io.outRequest(1) := north.outRequest
+  io.outData(1) := north.outData
+  north.outWrite := grantedPortNorthReady
+  north.crossbarOut := crossbar.outData(1)
+  north.outReady := io.outReady(1)
+  crossbar.select(1) := grantedPortNorth
 
-  val crossBar = Module(new CrossBar())
-  crossBar.io.inData(0) := inEast.io.fifo.out.bits
-  crossBar.io.select(0) := eastOutputDir
+  arbiterEast.isEmpty(0) := east.isEmpty
+  arbiterEast.isEmpty(1) := north.isEmpty
+  arbiterEast.requesting(0) := east.direction(0) // && east.requesting <- combinational path
+  arbiterEast.requesting(1) := north.direction(0) // && north.requesting
+  arbiterEast.isFull := east.isFull
 
-  io.outData(0) := crossBar.io.outData(0)
+  arbiterNorth.isEmpty(0) := east.isEmpty
+  arbiterNorth.isEmpty(1) := north.isEmpty
+  arbiterNorth.requesting(0) := east.direction(1) // && east.requesting
+  arbiterNorth.requesting(1) := north.direction(1) // && north.requesting
+  arbiterNorth.isFull := north.isFull
 }
 
 class RouterTest(r: Router) extends Tester(r) {
-  // Test to see that data travels through the router in one cycle
-  // Initialize router input data in east direction
-  val packet = PacketData.create(address = 10, xDest = 1, xSender = 1).litValue()
-  poke(r.io.inData(0), packet)
-  poke(r.io.inRequest(0), 1)
-  poke(r.io.outReady(0), 1)
 
-  // Cycle 0: Data arrives router and input port
-  val routerIn = peek(r.io.inData(0))
-  expect(r.inEast.io.fifo.in.bits, routerIn)
-  expect(r.inEast.io.fifo.out.bits, 0)
-  expect(routerIn == packet, "Packet matches inEast.in")
-  step(1)
+  def testDataPathFromEastToNorth() {
+    val packetFromEastToNorth = PacketData.create(
+      address = 15,
+      xDest = 1,
+      yDest = 0,
+      xSender = 2,
+      ySender = 1
+    ).litValue()
 
-  // Cycle 1: Data is at head in input port and traverses through crossbar
-  val inEastOut = peek(r.inEast.io.fifo.out.bits)
-  expect(r.outEast.io.fifo.in.bits, inEastOut)
-  expect(r.outEast.io.fifo.out.bits, 0)
-  expect(inEastOut == packet, "Packet matches inEast.in")
+    poke(r.io.inRequest(0), 1)
+    poke(r.io.inRequest(1), 0)
+    poke(r.io.inData(0), packetFromEastToNorth)
+    poke(r.io.inData(1), 0)
+    poke(r.io.outReady(0), 0)
+    poke(r.io.outReady(1), 0)
 
-  // Check that the RouteComputation module has calculated the right
-  // destination and source tile for this packet
-  expect(r.eastOutputDir, East.litValue)
-  step(1)
+    // Cycle 0: Data arrives router and input port
+    val routerIn = peek(r.io.inData(0))
+    expect(routerIn == packetFromEastToNorth, "Packet matches inEast.in")
 
-  // Cycle 2: Data reaches the output of the output port (to send it
-  // further on to the network)
-  val outEastOut = peek(r.outEast.io.fifo.out.bits)
-  expect(r.io.outData(0), outEastOut)
-  expect(outEastOut == packet, "Packet matches outEast.out")
+    expect(r.io.inReady(0), 1)
+    expect(r.io.inReady(1), 1)
+    expect(r.io.outRequest(0), 0) // output port should be empty
+    expect(r.io.outRequest(1), 0)
+    expect(r.io.outData(0), 0)
+    expect(r.io.outData(1), 0)
+
+    expect(r.grantedPortNorth, 0)
+    expect(r.grantedPortNorthReady, 0)
+    expect(r.grantedPortEast, 0)
+    expect(r.grantedPortEastReady, 0)
+    expect(r.east.outWrite, 0)
+    expect(r.north.outWrite, 0)
+
+    step(1)
+    // Stop sending data
+    poke(r.io.inRequest(0), 0)
+    poke(r.io.inRequest(1), 0)
+    poke(r.io.inData(0), 0)
+    poke(r.io.inData(1), 0)
+    poke(r.io.outReady(0), 0)
+    poke(r.io.outReady(1), 1)
+
+    // Cycle 1: Data is at head in input port and traverses through crossbar
+    // The port granted to send over the crossbar should be east.in
+
+    expect(r.io.inReady(0), 1)
+    expect(r.io.inReady(1), 1)
+    expect(r.io.outRequest(0), 0) // output port should still be empty
+    expect(r.io.outRequest(1), 0)
+    expect(r.io.outData(0), 0)
+    expect(r.io.outData(1), 0)
+
+    expect(r.grantedPortNorth, East.litValue)
+    expect(r.grantedPortNorthReady, 1)
+    expect(r.grantedPortEast, 0)
+    expect(r.grantedPortEastReady, 0)
+    expect(r.east.outWrite, 0)
+    expect(r.north.outWrite, 1)
+
+    step(1)
+
+    // Cycle 2: Data reaches the output of the output port, to send it
+    // further on to the network
+    expect(r.io.inReady(0), 1)
+    expect(r.io.inReady(1), 1)
+    expect(r.io.outRequest(0), 0)
+    expect(r.io.outRequest(1), 1)
+    expect(r.io.outData(0), 0)
+    expect(r.io.outData(1), packetFromEastToNorth)
+  }
+
+  testDataPathFromEastToNorth()
 }

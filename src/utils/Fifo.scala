@@ -3,6 +3,13 @@ package utils
 import Chisel._
 import router._
 
+// in.valid -> in.write
+// in.bits  -> in.data_in
+// in.ready <- !in.full
+// out.valid <- !out.empty
+// out.bits  <- out.data_out
+// out.ready -> out.read
+
 class DecoupledFifoIO[T <: Data](data: T) extends Bundle {
   val in = Decoupled(data).flip()
   val out = Decoupled(data)

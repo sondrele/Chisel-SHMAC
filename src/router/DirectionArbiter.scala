@@ -6,7 +6,7 @@ class ArbiterIO(numPorts: Int) extends Bundle {
   val isEmpty = Vec.fill(numPorts) { Bool(INPUT) } // Whether InputPort(i) is empty or not
   val requesting = Vec.fill(numPorts) { Bool(INPUT) } // Whether InputPort(i) wants to send or not
   val isFull = Bool(INPUT) // Whether the OutputPort for this arbiter is full or not
-  val granted = UInt(OUTPUT, width = 5) // The value of the InputPort that is granted
+  val granted = UInt(OUTPUT, width = 5) // The value of the InputPort that is granted to send to this arbiters OutputPort
   val grantedReady = Bool(OUTPUT) // Can be used to verify that that the granted direction is valid
 }
 
@@ -30,7 +30,12 @@ class DirectionArbiter(numPorts: Int) extends Module {
 
   granted.ready := Bool(true)
   io.grantedReady := granted.valid
-  io.granted := granted.bits
+
+  when (granted.valid) {
+    io.granted := granted.bits
+  }.otherwise {
+    io.granted := UInt(0)
+  }
 
   // This arbiter is the consumer of the RRAbiter, which is the producer of
   // the granted 'bits', i.e. the granted input_port that can send to the
