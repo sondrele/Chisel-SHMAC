@@ -11,30 +11,38 @@ class CrossBarIO extends Bundle {
 class CrossBar extends Module {
   val io = new CrossBarIO()
 
-  def fromDir(dir: TileDir): Bool = {
-    io.select(dir.index) != UInt(0)
-  }
+  def toDir(dir: TileDir): Bool = io.select(dir.index) != UInt(0)
+
+  def fromDir(dir: TileDir): Bool = filter === dir.value
 
   // Find out which input ports sends data
-  val filter = UInt()
-  val inData = PacketData()
-  when(fromDir(East)) {
+  val filter = UInt() // port to read from
+  when(toDir(East)) {
     filter := io.select(East.index)
-    inData := io.inData(East.index)
-  }.elsewhen(fromDir(North)) {
+  }.elsewhen(toDir(North)) {
     filter := io.select(North.index)
-    inData := io.inData(North.index)
-  }.elsewhen(fromDir(West)) {
+  }.elsewhen(toDir(West)) {
     filter := io.select(West.index)
-    inData := io.inData(West.index)
-  }.elsewhen(fromDir(South)) {
+  }.elsewhen(toDir(South)) {
     filter := io.select(South.index)
-    inData := io.inData(South.index)
-  }.elsewhen(fromDir(Local)) {
+  }.elsewhen(toDir(Local)) {
     filter := io.select(Local.index)
-    inData := io.inData(Local.index)
   }.otherwise {
     filter := UInt(0)
+  }
+
+  val inData = PacketData()
+  when (fromDir(East)) {
+    inData := io.inData(East.index)
+  }.elsewhen(fromDir(North)) {
+    inData := io.inData(North.index)
+  }.elsewhen(fromDir(West)) {
+    inData := io.inData(West.index)
+  }.elsewhen(fromDir(South)) {
+    inData := io.inData(South.index)
+  }.elsewhen(fromDir(Local)) {
+    inData := io.inData(Local.index)
+  }.otherwise {
     inData := UInt(0)
   }
 
@@ -42,7 +50,7 @@ class CrossBar extends Module {
   for (i <- 0 until 5) {
     io.outData(i) := UInt(0)
 
-    when(filter(i) === UInt(1)) {
+    when(io.select(i) != UInt(0)) {
       io.outData(i) := inData
     }
   }
@@ -52,8 +60,9 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
 
   def testCrossBar(from: TileDir, to: TileDir, value: Int) {
     for (i <- 0 until 5) {
-      if (i == from.index) {
-        poke(c.io.select(i), to.litValue)
+      if (to.index == i) {
+        // OutputPort[i] chooses to read data from InputPort 'from'
+        poke(c.io.select(i), from.litValue)
       } else {
         poke(c.io.select(i), 0)
       }
@@ -75,10 +84,11 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
   poke(c.io.inData(Local.index), 5)
   step(1)
 
+
   testCrossBar(East, East, 1)
-  testCrossBar(North, East, 2)
+  testCrossBar(East, North, 1)
   testCrossBar(East, South, 1)
-  testCrossBar(North, East,  2)
+  testCrossBar(North, East, 2)
   testCrossBar(West,  North, 3)
   testCrossBar(South, West,  4)
   testCrossBar(Local, North, 5)
