@@ -19,15 +19,12 @@ class Router(x: Int, y: Int) extends Module {
   val numRecords = 4
 
   val io = new RouterIO(numPorts)
+
   val crossbar = Module(new CrossBar()).io
 
-  val arbiterEast = Module(new DirectionArbiter(numPorts)).io
-  val arbiterNorth = Module(new DirectionArbiter(numPorts)).io
-  val arbiters = Vec(arbiterEast, arbiterNorth)
+  val arbiters = Vec.fill(numPorts) { Module(new DirectionArbiter(numPorts)).io }
 
-  val east = Module(new DirectionRouter(tileX, tileY, numRecords)).io
-  val north = Module(new DirectionRouter(tileX, tileY, numRecords)).io
-  val routers = Vec(east, north)
+  val routers = Vec.fill(numPorts) { Module(new DirectionRouter(tileX, tileY, numRecords)).io }
 
   routers(0).inRequest := io.inRequest(0)
   routers(0).inData := io.inData(0)
