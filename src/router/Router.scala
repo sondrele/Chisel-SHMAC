@@ -218,8 +218,8 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.arbiters(1).grantedReady, 0)
     expect(r.arbiters(0).granted, 0)
     expect(r.arbiters(0).grantedReady, 0)
-    expect(r.east.outWrite, 0)
-    expect(r.north.outWrite, 0)
+    expect(r.routers(0).outWrite, 0)
+    expect(r.routers(1).outWrite, 0)
 
     step(1)
     // Stop sending data
@@ -244,8 +244,8 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.arbiters(1).grantedReady, 1)
     expect(r.arbiters(0).granted, North.litValue)
     expect(r.arbiters(0).grantedReady, 1)
-    expect(r.east.outWrite, 1)
-    expect(r.north.outWrite, 1)
+    expect(r.routers(0).outWrite, 1)
+    expect(r.routers(1).outWrite, 1)
 
     step(1)
 
@@ -269,8 +269,8 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.arbiters(1).grantedReady, 0)
     expect(r.arbiters(0).granted, 0)
     expect(r.arbiters(0).grantedReady, 0)
-    expect(r.east.outWrite, 0)
-    expect(r.north.outWrite, 0)
+    expect(r.routers(0).outWrite, 0)
+    expect(r.routers(1).outWrite, 0)
 
     step(1)
   }
