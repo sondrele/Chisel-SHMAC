@@ -26,41 +26,27 @@ class Router(x: Int, y: Int) extends Module {
 
   val routers = Vec.fill(numPorts) { Module(new DirectionRouter(tileX, tileY, numRecords)).io }
 
-  routers(0).inRequest := io.inRequest(0)
-  routers(0).inData := io.inData(0)
-  routers(0).inRead := arbiters(1).granted(0) | arbiters(0).granted(0) // Verify that signal is right (seams to be)
-  crossbar.inData(0) := routers(0).crossbarIn
-  io.inReady(0) := routers(0).inReady
-  io.outRequest(0) := routers(0).outRequest
-  io.outData(0) := routers(0).outData
-  routers(0).outWrite := arbiters(0).grantedReady
-  routers(0).crossbarOut := crossbar.outData(0)
-  routers(0).outReady := io.outReady(0)
-  crossbar.select(0) := arbiters(0).granted
+  for (i <- 0 until numPorts) {
+    routers(i).inRequest := io.inRequest(i)
+    routers(i).inData := io.inData(i)
+    routers(i).inRead := arbiters(1).granted(i) | arbiters(0).granted(i) // Verify that signal is right (seams to be)
+    crossbar.inData(i) := routers(i).crossbarIn
+    io.inReady(i) := routers(i).inReady
+    io.outRequest(i) := routers(i).outRequest
+    io.outData(i) := routers(i).outData
+    routers(i).outWrite := arbiters(i).grantedReady
+    routers(i).crossbarOut := crossbar.outData(i)
+    routers(i).outReady := io.outReady(i)
+    crossbar.select(i) := arbiters(i).granted
+  }
 
-  routers(1).inRequest := io.inRequest(1)
-  routers(1).inData := io.inData(1)
-  routers(1).inRead := arbiters(1).granted(1) | arbiters(0).granted(1) // Verify that signal is right (seams to be)
-  crossbar.inData(1) := routers(1).crossbarIn
-  io.inReady(1) := routers(1).inReady
-  io.outRequest(1) := routers(1).outRequest
-  io.outData(1) := routers(1).outData
-  routers(1).outWrite := arbiters(1).grantedReady
-  routers(1).crossbarOut := crossbar.outData(1)
-  routers(1).outReady := io.outReady(1)
-  crossbar.select(1) := arbiters(1).granted
-
-  arbiters(0).isEmpty(0) := routers(0).isEmpty
-  arbiters(0).isEmpty(1) := routers(1).isEmpty
-  arbiters(0).requesting(0) := routers(0).direction(0)
-  arbiters(0).requesting(1) := routers(1).direction(0)
-  arbiters(0).isFull := routers(0).isFull
-
-  arbiters(1).isEmpty(0) := routers(0).isEmpty
-  arbiters(1).isEmpty(1) := routers(1).isEmpty
-  arbiters(1).requesting(0) := routers(0).direction(1)
-  arbiters(1).requesting(1) := routers(1).direction(1)
-  arbiters(1).isFull := routers(1).isFull
+  for (i <- 0 until numPorts) {
+    arbiters(i).isEmpty(0) := routers(0).isEmpty
+    arbiters(i).isEmpty(1) := routers(1).isEmpty
+    arbiters(i).requesting(0) := routers(0).direction(i)
+    arbiters(i).requesting(1) := routers(1).direction(i)
+    arbiters(i).isFull := routers(i).isFull
+  }
 }
 
 class RouterTest(r: Router) extends Tester(r) {
