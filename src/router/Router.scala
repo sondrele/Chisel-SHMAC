@@ -22,59 +22,57 @@ class Router(x: Int, y: Int) extends Module {
   val crossbar = Module(new CrossBar()).io
 
   val arbiterEast = Module(new DirectionArbiter(numPorts)).io
-  val grantedPortEast = arbiterEast.granted
-  val grantedPortEastReady = arbiterEast.grantedReady
   val arbiterNorth = Module(new DirectionArbiter(numPorts)).io
-  val grantedPortNorth = arbiterNorth.granted
-  val grantedPortNorthReady = arbiterNorth.grantedReady
+  val arbiters = Vec(arbiterEast, arbiterNorth)
 
   val east = Module(new DirectionRouter(tileX, tileY, numRecords)).io
   val north = Module(new DirectionRouter(tileX, tileY, numRecords)).io
+  val routers = Vec(east, north)
 
-  east.inRequest := io.inRequest(0)
-  east.inData := io.inData(0)
-  east.inRead := grantedPortNorth(0) | grantedPortEast(0) // Verify that signal is right (seams to be)
-  crossbar.inData(0) := east.crossbarIn
-  io.inReady(0) := east.inReady
-  io.outRequest(0) := east.outRequest
-  io.outData(0) := east.outData
-  east.outWrite := grantedPortEastReady
-  east.crossbarOut := crossbar.outData(0)
-  east.outReady := io.outReady(0)
-  crossbar.select(0) := grantedPortEast
+  routers(0).inRequest := io.inRequest(0)
+  routers(0).inData := io.inData(0)
+  routers(0).inRead := arbiters(1).granted(0) | arbiters(0).granted(0) // Verify that signal is right (seams to be)
+  crossbar.inData(0) := routers(0).crossbarIn
+  io.inReady(0) := routers(0).inReady
+  io.outRequest(0) := routers(0).outRequest
+  io.outData(0) := routers(0).outData
+  routers(0).outWrite := arbiters(0).grantedReady
+  routers(0).crossbarOut := crossbar.outData(0)
+  routers(0).outReady := io.outReady(0)
+  crossbar.select(0) := arbiters(0).granted
 
-  north.inRequest := io.inRequest(1)
-  north.inData := io.inData(1)
-  north.inRead := grantedPortNorth(1) | grantedPortEast(1) // Verify that signal is right (seams to be)
-  crossbar.inData(1) := north.crossbarIn
-  io.inReady(1) := north.inReady
-  io.outRequest(1) := north.outRequest
-  io.outData(1) := north.outData
-  north.outWrite := grantedPortNorthReady
-  north.crossbarOut := crossbar.outData(1)
-  north.outReady := io.outReady(1)
-  crossbar.select(1) := grantedPortNorth
+  routers(1).inRequest := io.inRequest(1)
+  routers(1).inData := io.inData(1)
+  routers(1).inRead := arbiters(1).granted(1) | arbiters(0).granted(1) // Verify that signal is right (seams to be)
+  crossbar.inData(1) := routers(1).crossbarIn
+  io.inReady(1) := routers(1).inReady
+  io.outRequest(1) := routers(1).outRequest
+  io.outData(1) := routers(1).outData
+  routers(1).outWrite := arbiters(1).grantedReady
+  routers(1).crossbarOut := crossbar.outData(1)
+  routers(1).outReady := io.outReady(1)
+  crossbar.select(1) := arbiters(1).granted
 
-  arbiterEast.isEmpty(0) := east.isEmpty
-  arbiterEast.isEmpty(1) := north.isEmpty
-  arbiterEast.requesting(0) := east.direction(0) // && east.requesting <- combinational path
-  arbiterEast.requesting(1) := north.direction(0) // && north.requesting
-  arbiterEast.isFull := east.isFull
+  arbiters(0).isEmpty(0) := routers(0).isEmpty
+  arbiters(0).isEmpty(1) := routers(1).isEmpty
+  arbiters(0).requesting(0) := routers(0).direction(0)
+  arbiters(0).requesting(1) := routers(1).direction(0)
+  arbiters(0).isFull := routers(0).isFull
 
-  arbiterNorth.isEmpty(0) := east.isEmpty
-  arbiterNorth.isEmpty(1) := north.isEmpty
-  arbiterNorth.requesting(0) := east.direction(1) // && east.requesting
-  arbiterNorth.requesting(1) := north.direction(1) // && north.requesting
-  arbiterNorth.isFull := north.isFull
+  arbiters(1).isEmpty(0) := routers(0).isEmpty
+  arbiters(1).isEmpty(1) := routers(1).isEmpty
+  arbiters(1).requesting(0) := routers(0).direction(1)
+  arbiters(1).requesting(1) := routers(1).direction(1)
+  arbiters(1).isFull := routers(1).isFull
 }
 
 class RouterTest(r: Router) extends Tester(r) {
 
   def peekArRouter() {
-    peek(r.east)
-    peek(r.north)
-    peek(r.arbiterEast)
-    peek(r.arbiterNorth)
+    peek(r.routers(0))
+    peek(r.routers(1))
+    peek(r.arbiters(0))
+    peek(r.arbiters(1))
     peek(r.crossbar)
   }
 
@@ -115,12 +113,12 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outData(0), 0)
     expect(r.io.outData(1), 0)
 
-    expect(r.grantedPortNorth, 0)
-    expect(r.grantedPortNorthReady, 0)
-    expect(r.grantedPortEast, 0)
-    expect(r.grantedPortEastReady, 0)
-    expect(r.east.outWrite, 0)
-    expect(r.north.outWrite, 0)
+    expect(r.arbiters(1).granted, 0)
+    expect(r.arbiters(1).grantedReady, 0)
+    expect(r.arbiters(0).granted, 0)
+    expect(r.arbiters(0).grantedReady, 0)
+    expect(r.routers(0).outWrite, 0)
+    expect(r.routers(1).outWrite, 0)
 
     step(1)
     // Stop sending data
@@ -141,12 +139,12 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outData(0), 0)
     expect(r.io.outData(1), 0)
 
-    expect(r.grantedPortNorth, East.litValue)
-    expect(r.grantedPortNorthReady, 1)
-    expect(r.grantedPortEast, 0)
-    expect(r.grantedPortEastReady, 0)
-    expect(r.east.outWrite, 0)
-    expect(r.north.outWrite, 1)
+    expect(r.arbiters(1).granted, East.litValue)
+    expect(r.arbiters(1).grantedReady, 1)
+    expect(r.arbiters(0).granted, 0)
+    expect(r.arbiters(0).grantedReady, 0)
+    expect(r.routers(0).outWrite, 0)
+    expect(r.routers(1).outWrite, 1)
 
     step(1)
 
@@ -166,12 +164,12 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outData(0), 0)
     expect(r.io.outData(1), packetFromEastToNorth)
 
-    expect(r.grantedPortNorth, 0)
-    expect(r.grantedPortNorthReady, 0)
-    expect(r.grantedPortEast, North.litValue)
-    expect(r.grantedPortEastReady, 1)
-    expect(r.east.outWrite, 1)
-    expect(r.north.outWrite, 0)
+    expect(r.arbiters(1).granted, 0)
+    expect(r.arbiters(1).grantedReady, 0)
+    expect(r.arbiters(0).granted, North.litValue)
+    expect(r.arbiters(0).grantedReady, 1)
+    expect(r.routers(0).outWrite, 1)
+    expect(r.routers(1).outWrite, 0)
 
     step(1)
 
@@ -216,10 +214,10 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outData(0), 0)
     expect(r.io.outData(1), 0)
 
-    expect(r.grantedPortNorth, 0)
-    expect(r.grantedPortNorthReady, 0)
-    expect(r.grantedPortEast, 0)
-    expect(r.grantedPortEastReady, 0)
+    expect(r.arbiters(1).granted, 0)
+    expect(r.arbiters(1).grantedReady, 0)
+    expect(r.arbiters(0).granted, 0)
+    expect(r.arbiters(0).grantedReady, 0)
     expect(r.east.outWrite, 0)
     expect(r.north.outWrite, 0)
 
@@ -242,10 +240,10 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outData(0), 0)
     expect(r.io.outData(1), 0)
 
-    expect(r.grantedPortNorth, East.litValue)
-    expect(r.grantedPortNorthReady, 1)
-    expect(r.grantedPortEast, North.litValue)
-    expect(r.grantedPortEastReady, 1)
+    expect(r.arbiters(1).granted, East.litValue)
+    expect(r.arbiters(1).grantedReady, 1)
+    expect(r.arbiters(0).granted, North.litValue)
+    expect(r.arbiters(0).grantedReady, 1)
     expect(r.east.outWrite, 1)
     expect(r.north.outWrite, 1)
 
@@ -267,16 +265,15 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outData(0), packetFromNorthToEast)
     expect(r.io.outData(1), packetFromEastToNorth)
 
-    expect(r.grantedPortNorth, 0)
-    expect(r.grantedPortNorthReady, 0)
-    expect(r.grantedPortEast, 0)
-    expect(r.grantedPortEastReady, 0)
+    expect(r.arbiters(1).granted, 0)
+    expect(r.arbiters(1).grantedReady, 0)
+    expect(r.arbiters(0).granted, 0)
+    expect(r.arbiters(0).grantedReady, 0)
     expect(r.east.outWrite, 0)
     expect(r.north.outWrite, 0)
 
     step(1)
   }
-
 
   testDataPathBetweenEastToNorth()
   testSendingTwoPacketsAtTheSameTime()
