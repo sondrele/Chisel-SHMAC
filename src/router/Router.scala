@@ -11,16 +11,13 @@ class RouterIO(numPorts: Int) extends Bundle {
   val outReady = Vec.fill(numPorts) { Bool(INPUT) } // True to request output to send data
 }
 
-class Router(x: Int, y: Int) extends Module {
+class Router(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   val tileX = UInt(x, width = 4)
   val tileY = UInt(y, width = 4)
 
-  val numPorts = 2
-  val numRecords = 4
-
   val io = new RouterIO(numPorts)
 
-  val crossbar = Module(new CrossBar()).io
+  val crossbar = Module(new CrossBar(numPorts)).io
   val arbiters = Vec.fill(numPorts) { Module(new DirectionArbiter(numPorts)).io }
   val routers = Vec.fill(numPorts) { Module(new DirectionRouter(tileX, tileY, numRecords)).io }
 

@@ -32,7 +32,7 @@ object Main {
     case "OutputPort" => chiselMainTest(args, () => Module(new OutputPort(2))) {
       p => new OutputPortTest(p)
     }
-    case "CrossBar" => chiselMainTest(args, () => Module(new CrossBar())) {
+    case "CrossBar" => chiselMainTest(args, () => Module(new CrossBar(5))) {
       b => new CrossBarTest(b)
     }
     case "RoutingArbiter" => chiselMainTest(args, () => Module(new RoutingArbiter())) {
@@ -47,7 +47,7 @@ object Main {
     case "DirectionRouter" => chiselMainTest(args, () => Module(new DirectionRouter(UInt(1), UInt(1), 4))) {
       b => new DirectionRouterTest(b)
     }
-    case "Router" => chiselMainTest(args, () => Module(new Router(1, 1))) {
+    case "Router" => chiselMainTest(args, () => Module(new Router(1, 1, 5, 4))) {
       b => new RouterTest(b)
     }
     case other => sys.error(s"No module with name $other")
