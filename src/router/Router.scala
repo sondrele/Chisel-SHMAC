@@ -33,7 +33,7 @@ class Router(x: Int, y: Int) extends Module {
 
   east.inRequest := io.inRequest(0)
   east.inData := io.inData(0)
-  east.inRead := grantedPortNorth(0) | grantedPortEast(0) // fix signal
+  east.inRead := grantedPortNorth(0) | grantedPortEast(0) // Verify that signal is right (seams to be)
   crossbar.inData(0) := east.crossbarIn
   io.inReady(0) := east.inReady
   io.outRequest(0) := east.outRequest
@@ -45,7 +45,7 @@ class Router(x: Int, y: Int) extends Module {
 
   north.inRequest := io.inRequest(1)
   north.inData := io.inData(1)
-  north.inRead := grantedPortNorth(1) | grantedPortEast(1) // fix signal
+  north.inRead := grantedPortNorth(1) | grantedPortEast(1) // Verify that signal is right (seams to be)
   crossbar.inData(1) := north.crossbarIn
   io.inReady(1) := north.inReady
   io.outRequest(1) := north.outRequest
@@ -70,7 +70,15 @@ class Router(x: Int, y: Int) extends Module {
 
 class RouterTest(r: Router) extends Tester(r) {
 
-  def testDataPathFromEastToNorth() {
+  def peekArRouter() {
+    peek(r.east)
+    peek(r.north)
+    peek(r.arbiterEast)
+    peek(r.arbiterNorth)
+    peek(r.crossbar)
+  }
+
+  def testDataPathBetweenEastToNorth() {
     val packetFromEastToNorth = PacketData.create(
       address = 15,
       xDest = 1,
@@ -79,16 +87,24 @@ class RouterTest(r: Router) extends Tester(r) {
       ySender = 1
     ).litValue()
 
+    val packetFromNorthToEast = PacketData.create(
+      address = 10,
+      xDest = 2,
+      yDest = 1,
+      xSender = 1,
+      ySender = 0
+    ).litValue()
+
     poke(r.io.inRequest(0), 1)
     poke(r.io.inRequest(1), 0)
     poke(r.io.inData(0), packetFromEastToNorth)
-    poke(r.io.inData(1), 0)
+    poke(r.io.inData(1), packetFromNorthToEast)
     poke(r.io.outReady(0), 0)
     poke(r.io.outReady(1), 0)
 
     // Cycle 0: Data arrives router and input port
-    val routerIn = peek(r.io.inData(0))
-    expect(routerIn == packetFromEastToNorth, "Packet matches inEast.in")
+    val eastIn = peek(r.io.inData(0))
+    expect(eastIn == packetFromEastToNorth, "Packet matches inEast.in")
 
     expect(r.io.inReady(0), 1)
     expect(r.io.inReady(1), 1)
@@ -107,10 +123,10 @@ class RouterTest(r: Router) extends Tester(r) {
     step(1)
     // Stop sending data
     poke(r.io.inRequest(0), 0)
-    poke(r.io.inRequest(1), 0)
+    poke(r.io.inRequest(1), 1)
     poke(r.io.inData(0), 0)
-    poke(r.io.inData(1), 0)
-    poke(r.io.outReady(0), 0)
+    poke(r.io.inData(1), packetFromNorthToEast)
+    poke(r.io.outReady(0), 1)
     poke(r.io.outReady(1), 1)
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
@@ -132,6 +148,13 @@ class RouterTest(r: Router) extends Tester(r) {
 
     step(1)
 
+    poke(r.io.inRequest(0), 0)
+    poke(r.io.inRequest(1), 0)
+    poke(r.io.inData(0), 0)
+    poke(r.io.inData(1), 0)
+    poke(r.io.outReady(0), 1)
+    poke(r.io.outReady(1), 1)
+
     // Cycle 2: Data reaches the output of the output port, to send it
     // further on to the network
     expect(r.io.inReady(0), 1)
@@ -140,7 +163,31 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.outRequest(1), 1)
     expect(r.io.outData(0), 0)
     expect(r.io.outData(1), packetFromEastToNorth)
+
+    expect(r.grantedPortNorth, 0)
+    expect(r.grantedPortNorthReady, 0)
+    expect(r.grantedPortEast, North.litValue)
+    expect(r.grantedPortEastReady, 1)
+    expect(r.east.outWrite, 1)
+    expect(r.north.outWrite, 0)
+
+    step(1)
+
+    poke(r.io.inRequest(0), 0)
+    poke(r.io.inRequest(1), 0)
+    poke(r.io.inData(0), 0)
+    poke(r.io.inData(1), 0)
+    poke(r.io.outReady(0), 1)
+    poke(r.io.outReady(1), 1)
+
+    expect(r.io.inReady(0), 1)
+    expect(r.io.inReady(1), 1)
+    expect(r.io.outRequest(0), 1)
+    expect(r.io.outRequest(1), 0)
+    expect(r.io.outData(0), packetFromNorthToEast)
+    expect(r.io.outData(1), 0)
+
   }
 
-  testDataPathFromEastToNorth()
+  testDataPathBetweenEastToNorth()
 }
