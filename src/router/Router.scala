@@ -21,15 +21,21 @@ class Router(x: Int, y: Int) extends Module {
   val io = new RouterIO(numPorts)
 
   val crossbar = Module(new CrossBar()).io
-
   val arbiters = Vec.fill(numPorts) { Module(new DirectionArbiter(numPorts)).io }
-
   val routers = Vec.fill(numPorts) { Module(new DirectionRouter(tileX, tileY, numRecords)).io }
+
+  def isGrantedByArbiters(j: Int, i: Int): Bool = {
+    if (j == 0) {
+      arbiters(j).granted(i)
+    } else {
+      arbiters(j).granted(i) | isGrantedByArbiters(j - 1, i)
+    }
+  }
 
   for (i <- 0 until numPorts) {
     routers(i).inRequest := io.inRequest(i)
     routers(i).inData := io.inData(i)
-    routers(i).inRead := arbiters(1).granted(i) | arbiters(0).granted(i) // Verify that signal is right (seams to be)
+    routers(i).inRead := isGrantedByArbiters(numPorts - 1, i)
     crossbar.inData(i) := routers(i).crossbarIn
     io.inReady(i) := routers(i).inReady
     io.outRequest(i) := routers(i).outRequest
@@ -41,10 +47,10 @@ class Router(x: Int, y: Int) extends Module {
   }
 
   for (i <- 0 until numPorts) {
-    arbiters(i).isEmpty(0) := routers(0).isEmpty
-    arbiters(i).isEmpty(1) := routers(1).isEmpty
-    arbiters(i).requesting(0) := routers(0).direction(i)
-    arbiters(i).requesting(1) := routers(1).direction(i)
+    for (j <- 0 until numPorts) {
+      arbiters(i).isEmpty(j) := routers(j).isEmpty
+      arbiters(i).requesting(j) := routers(j).direction(i)
+    }
     arbiters(i).isFull := routers(i).isFull
   }
 }
