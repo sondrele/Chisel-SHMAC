@@ -11,47 +11,15 @@ class CrossBarIO extends Bundle {
 class CrossBar extends Module {
   val io = new CrossBarIO()
 
-  def toDir(dir: TileDir): Bool = io.select(dir.index) != UInt(0)
-
-  def fromDir(dir: TileDir): Bool = filter === dir.value
-
-  // Find out which input ports sends data
-  val filter = UInt() // port to read from
-  when(toDir(East)) {
-    filter := io.select(East.index)
-  }.elsewhen(toDir(North)) {
-    filter := io.select(North.index)
-  }.elsewhen(toDir(West)) {
-    filter := io.select(West.index)
-  }.elsewhen(toDir(South)) {
-    filter := io.select(South.index)
-  }.elsewhen(toDir(Local)) {
-    filter := io.select(Local.index)
-  }.otherwise {
-    filter := UInt(0)
-  }
-
-  val inData = PacketData()
-  when (fromDir(East)) {
-    inData := io.inData(East.index)
-  }.elsewhen(fromDir(North)) {
-    inData := io.inData(North.index)
-  }.elsewhen(fromDir(West)) {
-    inData := io.inData(West.index)
-  }.elsewhen(fromDir(South)) {
-    inData := io.inData(South.index)
-  }.elsewhen(fromDir(Local)) {
-    inData := io.inData(Local.index)
-  }.otherwise {
-    inData := UInt(0)
-  }
-
-  // Default all outputs to 0
   for (i <- 0 until 5) {
     io.outData(i) := UInt(0)
 
-    when(io.select(i) != UInt(0)) {
-      io.outData(i) := inData
+    when (io.select(i) != UInt(0)) {
+      for (j <- 0 until 5) {
+        when(io.select(i)(j)) {
+          io.outData(i) := io.inData(j)
+        }
+      }
     }
   }
 }
@@ -84,7 +52,7 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
   poke(c.io.inData(Local.index), 5)
   step(1)
 
-
+  // One output can read from one input
   testCrossBar(East, East, 1)
   testCrossBar(East, North, 1)
   testCrossBar(East, South, 1)
@@ -92,4 +60,32 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
   testCrossBar(West,  North, 3)
   testCrossBar(South, West,  4)
   testCrossBar(Local, North, 5)
+
+  step(1)
+
+  // Test that all outputs reads the same input
+  poke(c.io.select(0), South.litValue)
+  poke(c.io.select(1), South.litValue)
+  poke(c.io.select(2), South.litValue)
+  poke(c.io.select(3), South.litValue)
+  poke(c.io.select(4), South.litValue)
+  expect(c.io.outData(0), 4)
+  expect(c.io.outData(1), 4)
+  expect(c.io.outData(2), 4)
+  expect(c.io.outData(3), 4)
+  expect(c.io.outData(4), 4)
+
+  step(1)
+
+  // Test that all outputs read a different input
+  poke(c.io.select(0), South.litValue)
+  poke(c.io.select(1), Local.litValue)
+  poke(c.io.select(2), North.litValue)
+  poke(c.io.select(3), East.litValue)
+  poke(c.io.select(4), West.litValue)
+  expect(c.io.outData(0), 4)
+  expect(c.io.outData(1), 5)
+  expect(c.io.outData(2), 2)
+  expect(c.io.outData(3), 1)
+  expect(c.io.outData(4), 3)
 }
