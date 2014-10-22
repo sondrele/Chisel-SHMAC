@@ -17,7 +17,6 @@ class DirectionRouterIO extends Bundle {
   val direction = UInt(OUTPUT, width = 5)
   // Signals to arbiter
   val isEmpty = Bool(OUTPUT)
-  // val requesting = Bool(OUTPUT)
   val isFull = Bool(OUTPUT)
 }
 
@@ -26,13 +25,13 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
 
   val input = Module(new InputPort(numRecords)).io
   input.fifo.in.valid := io.inRequest
-  input.fifo.out.ready := io.inRead // Bool(true) // read only when grt_to_out_ports for this instance is true
+  input.fifo.out.ready := io.inRead
   input.fifo.in.bits := io.inData
   io.inReady := input.fifo.in.ready
   io.crossbarIn := input.fifo.out.bits
 
   val output = Module(new OutputPort(numRecords)).io
-  output.fifo.in.valid := io.outWrite // Bool(true) // Router instance always writing output
+  output.fifo.in.valid := io.outWrite
   output.fifo.out.ready := io.outReady
   output.fifo.in.bits := io.crossbarOut
   io.outRequest := output.fifo.out.valid
@@ -43,14 +42,15 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
   destRoute.yCur := tileY
   destRoute.xDest := input.xDest
   destRoute.yDest := input.yDest
+
   when (input.fifo.out.valid) {
     io.direction := destRoute.dest
   }.otherwise {
     io.direction := UInt(0)
   }
 
+
   io.isEmpty := !input.fifo.out.valid
-  // io.requesting := input.fifo.out.valid && input.fifo.out.ready
   io.isFull := !output.fifo.in.ready
 }
 
