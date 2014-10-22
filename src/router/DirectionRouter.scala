@@ -49,7 +49,6 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
     io.direction := UInt(0)
   }
 
-
   io.isEmpty := !input.fifo.out.valid
   io.isFull := !output.fifo.in.ready
 }

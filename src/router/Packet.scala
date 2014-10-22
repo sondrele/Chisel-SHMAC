@@ -5,24 +5,24 @@ import Chisel._
 object PacketData {
   val LENGTH              = 196
 
-  val ADDRESS_BEGIN       = 0
-  val ADDRESS_END         = 31
-  val REPLY_INDEX         = 32
-  val WRITE_REQUEST_INDEX = 33
-  val WRITE_MASK_BEGIN    = 34
-  val WRITE_MASK_END      = 49
-  val EXOP_INDEX          = 50
-  val ERROR_INDEX         = 51
-  val DATA_BEGIN          = 52
-  val DATA_END            = 179
-  val X_SEND_BEGIN        = 180
-  val X_SEND_END          = 183
-  val Y_SEND_BEGIN        = 184
-  val Y_SEND_END          = 187
-  val X_DEST_BEGIN        = 188
-  val X_DEST_END          = 191
-  val Y_DEST_BEGIN        = 192
   val Y_DEST_END          = 195
+  val Y_DEST_BEGIN        = 192
+  val X_DEST_END          = 191
+  val X_DEST_BEGIN        = 188
+  val Y_SEND_END          = 187
+  val Y_SEND_BEGIN        = 184
+  val X_SEND_END          = 183
+  val X_SEND_BEGIN        = 180
+  val DATA_END            = 179
+  val DATA_BEGIN          = 52
+  val ERROR_INDEX         = 51
+  val EXOP_INDEX          = 50
+  val WRITE_MASK_END      = 49
+  val WRITE_MASK_BEGIN    = 34
+  val WRITE_REQUEST_INDEX = 33
+  val REPLY_INDEX         = 32
+  val ADDRESS_END         = 31
+  val ADDRESS_BEGIN       = 0
 
   def apply(x: Int): PacketData = Lit(x) {
     PacketData()
@@ -43,19 +43,32 @@ object PacketData {
   }
 
   def create(
-    address: Int = 0,
     yDest: Int = 0,
     xDest: Int = 0,
     ySender: Int = 0,
-    xSender: Int = 0):
-  PacketData = {
-    val addr = UInt(address, width = 32)
+    xSender: Int = 0,
+    payload: Int = 0,
+    error: Boolean = false,
+    exop: Boolean = false,
+    writeMask: Int = 0,
+    writeReq: Boolean = false,
+    reply: Boolean = false,
+    address: Int = 0
+  ): PacketData = {
     val yd = UInt(yDest, width = 4)
     val xd = UInt(xDest, width = 4)
     val ys = UInt(ySender, width = 4)
     val xs = UInt(xSender, width = 4)
+    val _payload = UInt(payload, width = 128)
+    val _error = Bool(error)
+    val _exop = Bool(exop)
+    val _writeMask = UInt(writeMask, width = 16)
+    val _writeReq = Bool(writeReq)
+    val _reply = Bool(reply)
+    val _address = UInt(address, width = 32)
 
-    val data = Cat(yd, xd, ys, xs, UInt(0, width = 148), addr)
+    val data = Cat(yd, xd, ys, xs, _payload, _error, _exop, _writeMask, _writeReq, _reply, _address)
+    assert(data.getWidth() == PacketData.LENGTH)
     PacketData(data)
   }
 }
@@ -63,18 +76,22 @@ object PacketData {
 class PacketData extends Bits {
   type T = PacketData
 
-  def address: UInt = this(PacketData.ADDRESS_END, PacketData.ADDRESS_BEGIN)
-  def isReply: Bool = this(PacketData.REPLY_INDEX).toBool()
-  def xSender: UInt = this(PacketData.X_SEND_END, PacketData.X_SEND_BEGIN)
-  def ySender: UInt = this(PacketData.Y_SEND_END, PacketData.Y_SEND_BEGIN)
-  def xDest: UInt = this(PacketData.X_DEST_END, PacketData.X_DEST_BEGIN)
   def yDest: UInt = this(PacketData.Y_DEST_END, PacketData.Y_DEST_BEGIN)
+  def xDest: UInt = this(PacketData.X_DEST_END, PacketData.X_DEST_BEGIN)
+  def ySender: UInt = this(PacketData.Y_SEND_END, PacketData.Y_SEND_BEGIN)
+  def xSender: UInt = this(PacketData.X_SEND_END, PacketData.X_SEND_BEGIN)
+  def payload: UInt = this(PacketData.DATA_END, PacketData.DATA_BEGIN)
+  def isError: Bool = this(PacketData.ERROR_INDEX)
+  def isExop: Bool = this(PacketData.EXOP_INDEX)
+  def writeMask: UInt = this(PacketData.WRITE_MASK_END, PacketData.WRITE_MASK_BEGIN)
+  def isWriteReq: Bool = this(PacketData.WRITE_REQUEST_INDEX)
+  def isReply: Bool = this(PacketData.REPLY_INDEX).toBool()
+  def address: UInt = this(PacketData.ADDRESS_END, PacketData.ADDRESS_BEGIN)
 
   override def fromInt(x: Int): this.type = {
     PacketData(x).asInstanceOf[this.type]
   }
 }
-
 
 class PacketDataModule extends Module {
   val io = new Bundle() {
