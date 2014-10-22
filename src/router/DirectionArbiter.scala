@@ -40,9 +40,9 @@ class DirectionArbiter(numPorts: Int) extends Module {
   // This arbiter is the consumer of the RRAbiter, which is the producer of
   // the granted 'bits', i.e. the granted input_port that can send to the
   // output port corresponding to this DirectionArbiter-instance
-  val arbiter = Module(new RRArbiter(UInt(), numPorts))
-  arbiter.io.in <> requestingInputPorts
-  arbiter.io.out <> granted
+  val arbiter = Module(new RRArbiter(UInt(), numPorts)).io
+  arbiter.in <> requestingInputPorts
+  arbiter.out <> granted
 }
 
 class DirectionArbiterTest(a: DirectionArbiter) extends Tester(a) {

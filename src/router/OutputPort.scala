@@ -8,8 +8,7 @@ class OutputPort(n: Int) extends Module {
     val fifo = new DecoupledFifoIO(PacketData())
   }
 
-  val queue = Module(new Fifo(PacketData(), n))
-  io.fifo <> queue.io
+  io.fifo <> Module(new Fifo(PacketData(), n)).io
 }
 
 class OutputPortTest(p: OutputPort) extends Tester(p) {
