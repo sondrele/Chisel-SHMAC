@@ -7,7 +7,18 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val testArgs = args.slice(1, args.length)
-    val modules = Array("RouteComputation", "Fifo", "InputPort", "OutputPort", "CrossBar", "RoutingArbiter")
+    val modules = Array(
+      "RouteComputation",
+      "Fifo",
+      "InputPort",
+      "OutputPort",
+      "CrossBar",
+      "RoutingArbiter",
+      "DirectionArbiter",
+      "Packet",
+      "DirectionRouter",
+      "Router"
+    )
 
     args(0) match {
       case "testall" => testModules(modules, testArgs)
