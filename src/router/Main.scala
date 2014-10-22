@@ -13,7 +13,6 @@ object Main {
       "InputPort",
       "OutputPort",
       "CrossBar",
-      "RoutingArbiter",
       "DirectionArbiter",
       "Packet",
       "DirectionRouter",
@@ -45,9 +44,6 @@ object Main {
     }
     case "CrossBar" => chiselMainTest(args, () => Module(new CrossBar(5))) {
       b => new CrossBarTest(b)
-    }
-    case "RoutingArbiter" => chiselMainTest(args, () => Module(new RoutingArbiter())) {
-      b => new RoutingArbiterTest(b)
     }
     case "DirectionArbiter" => chiselMainTest(args, () => Module(new DirectionArbiter(5))) {
       b => new DirectionArbiterTest(b)
