@@ -1,5 +1,6 @@
 import Chisel._
 import router._
+import test._
 
 object Main {
 
@@ -46,8 +47,8 @@ object Main {
     case "DirectionArbiter" => chiselMainTest(args, () => Module(new DirectionArbiter(5))) {
       b => new DirectionArbiterTest(b)
     }
-    case "Packet" => chiselMainTest(args, () => Module(new PacketDataModule())) {
-      b => new PacketDataModuleTest(b)
+    case "Packet" => chiselMainTest(args, () => Module(new PacketDataTestModule())) {
+      b => new PacketDataTestModuleTest(b)
     }
     case "DirectionRouter" => chiselMainTest(args, () => Module(new DirectionRouter(UInt(1), UInt(1), 4))) {
       b => new DirectionRouterTest(b)
