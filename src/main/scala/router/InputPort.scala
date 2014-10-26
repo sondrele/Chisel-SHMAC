@@ -1,7 +1,6 @@
 package router
 
 import Chisel._
-import utils.{Fifo, DecoupledFifoIO}
 
 class InputPort(n: Int) extends Module {
   val io = new Bundle {

@@ -1,7 +1,6 @@
-package utils
+package router
 
 import Chisel._
-import router._
 
 // in.valid -> in.write
 // in.bits  -> in.data_in
