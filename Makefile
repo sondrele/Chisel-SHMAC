@@ -4,7 +4,7 @@
 
 SBT ?= sbt
 # package.Object (main)
-MAIN = router.Main
+MAIN = Main
 RUN = run-main $(MAIN)
 TARGET_DIR = generated
 

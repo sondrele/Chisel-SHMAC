@@ -1,6 +1,5 @@
-package router
-
 import Chisel._
+import router._
 
 object Main {
 
