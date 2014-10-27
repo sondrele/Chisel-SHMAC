@@ -2,7 +2,7 @@ import Chisel._
 import router._
 import test._
 
-object Main {
+object TestMain {
 
   def main(args: Array[String]): Unit = {
     val testArgs = args.slice(1, args.length)

@@ -4,7 +4,7 @@
 
 SBT ?= sbt
 # package.Object (main)
-MAIN = Main
+MAIN = TestMain
 RUN = run-main $(MAIN)
 TARGET_DIR = generated
 
