@@ -2,13 +2,17 @@ package router
 
 import Chisel._
 
+class RouterPortIO extends Bundle {
+  val inRequest  = Bool(INPUT)        // Request to write into router
+  val inData     = PacketData(INPUT)  // Data to write
+  val inReady    = Bool(OUTPUT)       // True if input port is not full
+  val outRequest = Bool(OUTPUT)       // Router requesting to send data
+  val outData    = PacketData(OUTPUT) // Data to send
+  val outReady   = Bool(INPUT)        // True to request output to send data
+}
+
 class RouterIO(numPorts: Int) extends Bundle {
-  val inRequest = Vec.fill(numPorts) { Bool(INPUT) } // Request to write into router
-  val inData = Vec.fill(numPorts) { PacketData(INPUT) } // Data to write
-  val inReady = Vec.fill(numPorts) { Bool(OUTPUT) } // True if input port is not full
-  val outRequest = Vec.fill(numPorts) { Bool(OUTPUT) } // Router requesting to send data
-  val outData = Vec.fill(numPorts) { PacketData(OUTPUT) } // Data to send
-  val outReady = Vec.fill(numPorts) { Bool(INPUT) } // True to request output to send data
+  val ports = Vec.fill(numPorts) { new RouterPortIO() }
 }
 
 class Router(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
@@ -30,16 +34,16 @@ class Router(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   }
 
   for (i <- 0 until numPorts) {
-    routers(i).inRequest := io.inRequest(i)
-    routers(i).inData := io.inData(i)
+    routers(i).inRequest := io.ports(i).inRequest
+    routers(i).inData := io.ports(i).inData
     routers(i).inRead := isGrantedByArbiters(numPorts - 1, i)
     crossbar.inData(i) := routers(i).crossbarIn
-    io.inReady(i) := routers(i).inReady
-    io.outRequest(i) := routers(i).outRequest
-    io.outData(i) := routers(i).outData
+    io.ports(i).inReady := routers(i).inReady
+    io.ports(i).outRequest := routers(i).outRequest
+    io.ports(i).outData := routers(i).outData
     routers(i).outWrite := arbiters(i).grantedReady
     routers(i).crossbarOut := crossbar.outData(i)
-    routers(i).outReady := io.outReady(i)
+    routers(i).outReady := io.ports(i).outReady
     crossbar.select(i) := arbiters(i).granted
   }
 
