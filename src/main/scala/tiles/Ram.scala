@@ -7,22 +7,22 @@ class ReadCmd extends Bundle {
   val address = UInt(width = 32)
 }
 
-class WriteCmd(w: Int) extends ReadCmd {
-  override def clone = new WriteCmd(w).asInstanceOf[this.type]
-  val data = UInt(width = w)
+class WriteCmd(dataWidth: Int) extends ReadCmd {
+  override def clone = new WriteCmd(dataWidth).asInstanceOf[this.type]
+  val data = UInt(width = dataWidth)
 }
 
-class RamIO(w: Int) extends Bundle {
-  override def clone = new RamIO(w).asInstanceOf[this.type]
+class RamIO(dataWidth: Int) extends Bundle {
+  override def clone = new RamIO(dataWidth).asInstanceOf[this.type]
   val reads  = new DeqIO(new ReadCmd())
-  val writes = new DeqIO(new WriteCmd(w))
-  val out    = new EnqIO(UInt(width = w))
+  val writes = new DeqIO(new WriteCmd(dataWidth))
+  val out    = new EnqIO(UInt(width = dataWidth))
 }
 
-class Ram(depth: Int, w: Int) extends Module {
-  val io = new RamIO(w)
+class Ram(depth: Int, dataWidth: Int) extends Module {
+  val io = new RamIO(dataWidth)
 
-  val ram = Mem(UInt(width = w), depth)
+  val ram = Mem(UInt(width = dataWidth), depth)
 
   when (io.writes.valid) {
     val cmd = io.writes.deq()

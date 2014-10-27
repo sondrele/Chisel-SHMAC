@@ -57,7 +57,7 @@ object TestMain {
     case "Router" => chiselMainTest(args, () => Module(new Router(1, 1, 5, 4))) {
       b => new RouterTest(b)
     }
-    case "Ram" => chiselMainTest(args, () => Module(new Ram(depth = 8, w = 32))) {
+    case "Ram" => chiselMainTest(args, () => Module(new Ram(depth = 8, dataWidth = 32))) {
       r => new RamTest(r)
     }
     case other => sys.error(s"No module with name $other")
