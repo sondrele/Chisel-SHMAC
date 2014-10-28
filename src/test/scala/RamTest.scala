@@ -18,6 +18,7 @@ class RamTest(r: Ram) extends Tester(r) {
     poke(r.io.out.ready, 1)
     poke(r.io.reads.valid, 1)
     poke(r.io.reads.bits.address, addr)
+    expect(r.io.out.valid, 1)
     step(1)
     expect(r.io.out.bits, expected)
   }
@@ -27,6 +28,7 @@ class RamTest(r: Ram) extends Tester(r) {
     poke(r.io.out.ready, 1)
     poke(r.io.reads.valid, 1)
     poke(r.io.reads.bits.address, addr)
+    expect(r.io.out.valid, 1)
     step(1)
     peek(r.io.out.bits).toInt
   }

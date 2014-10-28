@@ -16,7 +16,9 @@ object TestMain {
       "DirectionArbiter",
       "Packet",
       "DirectionRouter",
-      "Router"
+      "Router",
+      "Ram",
+      "RamTile"
     )
 
     args(0) match {
@@ -59,6 +61,9 @@ object TestMain {
     }
     case "Ram" => chiselMainTest(args, () => Module(new Ram(depth = 8, dataWidth = 32))) {
       r => new RamTest(r)
+    }
+    case "RamTile" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4))) {
+      t => new RamTileTest(t)
     }
     case other => sys.error(s"No module with name $other")
   }
