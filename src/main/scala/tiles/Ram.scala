@@ -29,7 +29,6 @@ class Ram(depth: Int, dataWidth: Int) extends Module {
     ram(cmd.address) := cmd.data
   }.elsewhen (io.reads.valid && io.out.ready) {
     val cmd = io.reads.deq()
-    // io.out.enq(Reg(next = ram(cmd.address)))
     io.out.enq(ram(cmd.address))
   }
 }
