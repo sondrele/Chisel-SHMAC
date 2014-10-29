@@ -121,4 +121,17 @@ class RamTileTest(t: RamTile) extends Tester(t) {
   // and the tile
   expect(t.io.ports(0).outData, responseFromLocalToEast)
   expect(t.io.ports(0).outRequest, 1)
+
+  step(1)
+
+  // Cycle 8: Read the data from east output port
+  poke(t.io.ports(0).outReady, 1)
+  expect(t.io.ports(0).outData, responseFromLocalToEast)
+  expect(t.io.ports(0).outRequest, 1)
+
+  step(1)
+
+  // Cycle 9: The data should now have left the east output port
+  expect(t.io.ports(0).outData, 0)
+  expect(t.io.ports(0).outRequest, 0)
 }
