@@ -13,6 +13,9 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
     io.ports(i) <> router.ports(i)
   }
 
+  // TODO: Take packet-reply into consideration, and create a response-packet
+  // that copies request-packet, but changes reply-fields etc.
+
   val localPort = router.ports(numPorts)
   val data = localPort.outData
   val address = data.address
@@ -29,9 +32,9 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   ram.writes.bits.address := address
   ram.writes.bits.data := payload
 
-  localPort.outReady := ram.reads.ready && ram.writes.ready
+  localPort.outReady := ram.reads.ready || ram.writes.ready
 
-  val outPacket = PacketData.create(payload = ram.out.bits.toBits().toUInt().litValue().toInt)
+  val outPacket = PacketData.update(payload = ram.out.bits)
 
   ram.out.ready := localPort.inReady
   localPort.inRequest := ram.out.valid
