@@ -22,13 +22,13 @@ class RamIO(dataWidth: Int) extends Bundle {
 class Ram(depth: Int, dataWidth: Int) extends Module {
   val io = new RamIO(dataWidth)
 
-  val ram = Mem(UInt(width = dataWidth), depth)
+  val ram = Mem(UInt(width = dataWidth), depth, seqRead = true)
 
   when (io.writes.valid) {
     val cmd = io.writes.deq()
     ram(cmd.address) := cmd.data
   }.elsewhen (io.reads.valid && io.out.ready) {
     val cmd = io.reads.deq()
-    io.out.enq(ram(cmd.address))
+    io.out.enq(Reg(next = ram(cmd.address)))
   }
 }
