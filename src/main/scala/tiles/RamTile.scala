@@ -5,16 +5,13 @@ import router._
 
 class RamTileIO(numPorts: Int) extends RouterIO(numPorts)
 
-class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
+class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) extends Module {
   val io = new RamTileIO(numPorts)
 
   val router = Module(new Router(x, y, numPorts + 1, numRecords)).io
   for (i <- 0 until numPorts) {
     io.ports(i) <> router.ports(i)
   }
-
-  // TODO: Take packet-reply into consideration, and create a response-packet
-  // that copies request-packet, but changes reply-fields etc.
 
   val localPort = router.ports(numPorts)
   val data = localPort.outData
@@ -23,7 +20,7 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   val isWrite = data.isWriteReq
   val isRead = !isWrite
 
-  val ram = Module(new Ram(depth = 8, dataWidth = 128)).io
+  val ram = Module(new Ram(depth = memDepth, dataWidth = 128)).io
 
   ram.reads.valid := localPort.outRequest && isRead
   ram.reads.bits.address := address
@@ -46,7 +43,7 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
     data.isExop,
     data.writeMask,
     data.isWriteReq,
-    Bool(true), // isReply - only if there's a read-request
+    Bool(true), // isReply - always set to true temporarily
     data.address
   )
 
