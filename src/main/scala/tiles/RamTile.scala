@@ -34,7 +34,23 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
 
   localPort.outReady := ram.reads.ready || ram.writes.ready
 
-  val outPacket = PacketData.update(payload = ram.out.bits)
+  val ramData = ram.out.bits
+
+  // val outPacket = PacketData.update(payload = ram.out.bits)
+
+  val outPacket = Cat(
+    data.yDest,
+    data.xDest,
+    data.ySender,
+    data.xSender,
+    ramData,
+    data.isError,
+    data.isExop,
+    data.writeMask,
+    data.isWriteReq,
+    Bool(true), // isReply - only if there's a read-request
+    data.address
+  )
 
   ram.out.ready := localPort.inReady
   localPort.inRequest := ram.out.valid
