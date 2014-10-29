@@ -19,7 +19,7 @@ class RamTileTest(t: RamTile) extends Tester(t) {
     writeReq = true,
     reply = false,
     payload = 15,
-    address = 0
+    address = 10
   ).litValue()
 
   val readFromEastToLocal = PacketData.create(
@@ -30,7 +30,7 @@ class RamTileTest(t: RamTile) extends Tester(t) {
     writeReq = false,
     reply = false,
     payload = 0,
-    address = 0
+    address = 10
   ).litValue()
 
   val responseFromLocalToEast = PacketData.create(
@@ -41,7 +41,7 @@ class RamTileTest(t: RamTile) extends Tester(t) {
     writeReq = false,
     reply = true,
     payload = 15,
-    address = 0
+    address = 10
   ).litValue()
 
   // Cycle 0: Send data to the tiles east input port
@@ -70,7 +70,7 @@ class RamTileTest(t: RamTile) extends Tester(t) {
   // and further transmitted to ram.io.writes
   expect(t.router.ports(4).outData, writeFromEastToLocal)
   expect(t.ram.writes.bits.data, 15)
-  expect(t.ram.writes.bits.address, 0)
+  expect(t.ram.writes.bits.address, 10)
 
   peekAtRamTile()
 
@@ -90,6 +90,8 @@ class RamTileTest(t: RamTile) extends Tester(t) {
   poke(t.io.ports(0).inData, 0)
   poke(t.io.ports(0).outReady, 0)
 
+  peekAtRamTile()
+
   step(1)
 
   // Cycle 5: Packet should have reached the tile and the
@@ -97,7 +99,7 @@ class RamTileTest(t: RamTile) extends Tester(t) {
   expect(t.router.ports(4).outData, readFromEastToLocal)
   expect(t.router.ports(4).outRequest, 1)
   expect(t.router.ports(4).inReady, 1)
-  expect(t.ram.reads.bits.address, 0)
+  expect(t.ram.reads.bits.address, 10)
   expect(t.ram.reads.ready, 1)
   expect(t.ram.out.bits, 15)
   expect(t.ram.out.valid, 1)
