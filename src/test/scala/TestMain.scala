@@ -63,7 +63,10 @@ object TestMain {
       r => new RamTest(r)
     }
     case "RamTile" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4))) {
-      t => new RamTileTest(t)
+      t => {
+        new RamTileTest(t)
+        new RamTileSumTest(t)
+      }
     }
     case other => sys.error(s"No module with name $other")
   }
