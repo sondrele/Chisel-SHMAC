@@ -71,6 +71,32 @@ object PacketData {
     assert(data.getWidth() == PacketData.LENGTH)
     PacketData(data)
   }
+
+  def update(
+    yDest: UInt = UInt(0, width = 4),
+    xDest: UInt = UInt(0, width = 4),
+    ySender: UInt = UInt(0, width = 4),
+    xSender: UInt = UInt(0, width = 4),
+    payload: UInt = UInt(0, width = 128),
+    error: Bool = Bool(false),
+    exop: Bool = Bool(false),
+    writeMask: UInt = UInt(0, width = 16),
+    writeReq: Bool = Bool(false),
+    reply: Bool = Bool(false),
+    address: UInt = UInt(0, width = 32)
+  ): PacketData = {
+    assert(yDest.getWidth() == 4)
+    assert(xDest.getWidth() == 4)
+    assert(ySender.getWidth() == 4)
+    assert(xSender.getWidth() == 4)
+    assert(payload.getWidth() == 128)
+    assert(writeMask.getWidth() == 16)
+    assert(address.getWidth() == 32)
+
+    val data = Cat(yDest, xDest, ySender, xSender, payload, error, exop, writeMask, writeReq, reply, address)
+    assert(data.getWidth() == PacketData.LENGTH)
+    PacketData(data)
+  }
 }
 
 class PacketData extends Bits {
