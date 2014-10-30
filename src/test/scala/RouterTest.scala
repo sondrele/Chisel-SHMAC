@@ -34,21 +34,31 @@ class RouterTest(r: Router) extends Tester(r) {
   def testDataPathBetweenEastToNorth() {
     poke(r.io.ports(0).inRequest, 1)
     poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, packetFromEastToNorth)
-    poke(r.io.ports(1).inData, packetFromNorthToEast)
+
+//    poke(r.io.ports(0).inData, packetFromEastToNorth)
+    poke(r.io.ports(0).inData.header.address, 15)
+    poke(r.io.ports(0).inData.dest.x, 1)
+    poke(r.io.ports(0).inData.dest.y, 0)
+    poke(r.io.ports(0).inData.sender.x, 2)
+    poke(r.io.ports(0).inData.sender.y, 1)
+
+//    poke(r.io.ports(1).inData, packetFromNorthToEast)
+    poke(r.io.ports(1).inData.header.address, 10)
+    poke(r.io.ports(1).inData.dest.x, 2)
+    poke(r.io.ports(1).inData.dest.y, 1)
+    poke(r.io.ports(1).inData.sender.x, 1)
+    poke(r.io.ports(1).inData.sender.y, 0)
+
     poke(r.io.ports(0).outReady, 0)
     poke(r.io.ports(1).outReady, 0)
 
     // Cycle 0: Data arrives router and input port
-    val eastIn = peek(r.io.ports(0).inData)
-    expect(eastIn == packetFromEastToNorth, "Packet matches east.in")
-
     expect(r.io.ports(0).inReady, 1)
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 0) // output port should be empty
     expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, 0)
-    expect(r.io.ports(1).outData, 0)
+    expect(r.io.ports(0).outData.header.address, 0)
+    expect(r.io.ports(1).outData.header.address, 0)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
@@ -61,20 +71,20 @@ class RouterTest(r: Router) extends Tester(r) {
     // Stop sending data
     poke(r.io.ports(0).inRequest, 0)
     poke(r.io.ports(1).inRequest, 1)
-    poke(r.io.ports(0).inData, 0)
-    poke(r.io.ports(1).inData, packetFromNorthToEast)
+//    poke(r.io.ports(0).inData, 0)
+//    poke(r.io.ports(1).inData, packetFromNorthToEast)
+
     poke(r.io.ports(0).outReady, 1)
     poke(r.io.ports(1).outReady, 1)
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
     // The port granted to send over the crossbar should be east.in
-
     expect(r.io.ports(0).inReady, 1)
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 0) // output port should still be empty
     expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, 0)
-    expect(r.io.ports(1).outData, 0)
+    expect(r.io.ports(0).outData.header.address, 0)
+    expect(r.io.ports(1).outData.header.address, 0)
 
     expect(r.arbiters(1).granted, East.litValue)
     expect(r.arbiters(1).grantedReady, 1)
@@ -87,8 +97,8 @@ class RouterTest(r: Router) extends Tester(r) {
 
     poke(r.io.ports(0).inRequest, 0)
     poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, 0)
-    poke(r.io.ports(1).inData, 0)
+    poke(r.io.ports(0).inData.header.address, 0)
+    poke(r.io.ports(1).inData.header.address, 0)
     poke(r.io.ports(0).outReady, 1)
     poke(r.io.ports(1).outReady, 1)
 
@@ -98,8 +108,14 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 0)
     expect(r.io.ports(1).outRequest, 1)
-    expect(r.io.ports(0).outData, 0)
-    expect(r.io.ports(1).outData, packetFromEastToNorth)
+    expect(r.io.ports(0).outData.header.address, 0)
+
+//    expect(r.io.ports(1).outData, packetFromEastToNorth)
+    expect(r.io.ports(1).outData.header.address, 15)
+    expect(r.io.ports(1).outData.dest.x, 1)
+    expect(r.io.ports(1).outData.dest.y, 0)
+    expect(r.io.ports(1).outData.sender.x, 2)
+    expect(r.io.ports(1).outData.sender.y, 1)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
@@ -112,8 +128,8 @@ class RouterTest(r: Router) extends Tester(r) {
 
     poke(r.io.ports(0).inRequest, 0)
     poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, 0)
-    poke(r.io.ports(1).inData, 0)
+//    poke(r.io.ports(0).inData, 0)
+//    poke(r.io.ports(1).inData, 0)
     poke(r.io.ports(0).outReady, 1)
     poke(r.io.ports(1).outReady, 1)
 
@@ -121,8 +137,15 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 1)
     expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, packetFromNorthToEast)
-    expect(r.io.ports(1).outData, 0)
+
+//    expect(r.io.ports(0).outData, packetFromNorthToEast)
+    poke(r.io.ports(0).outData.header.address, 10)
+    poke(r.io.ports(0).outData.dest.x, 2)
+    poke(r.io.ports(0).outData.dest.y, 1)
+    poke(r.io.ports(0).outData.sender.x, 1)
+    poke(r.io.ports(0).outData.sender.y, 0)
+
+    expect(r.io.ports(1).outData.header.address, 0)
 
     step(1)
   }
@@ -133,23 +156,31 @@ class RouterTest(r: Router) extends Tester(r) {
   def testSendingTwoPacketsAtTheSameTime() {
     poke(r.io.ports(0).inRequest, 1)
     poke(r.io.ports(1).inRequest, 1)
-    poke(r.io.ports(0).inData, packetFromEastToNorth)
-    poke(r.io.ports(1).inData, packetFromNorthToEast)
+
+//    poke(r.io.ports(0).inData, packetFromEastToNorth)
+    poke(r.io.ports(0).inData.header.address, 15)
+    poke(r.io.ports(0).inData.dest.x, 1)
+    poke(r.io.ports(0).inData.dest.y, 0)
+    poke(r.io.ports(0).inData.sender.x, 2)
+    poke(r.io.ports(0).inData.sender.y, 1)
+
+//    poke(r.io.ports(1).inData, packetFromNorthToEast)
+    poke(r.io.ports(1).inData.header.address, 10)
+    poke(r.io.ports(1).inData.dest.x, 2)
+    poke(r.io.ports(1).inData.dest.y, 1)
+    poke(r.io.ports(1).inData.sender.x, 1)
+    poke(r.io.ports(1).inData.sender.y, 0)
+
     poke(r.io.ports(0).outReady, 0)
     poke(r.io.ports(1).outReady, 0)
 
     // Cycle 0: Data arrives router and input port
-    val eastIn = peek(r.io.ports(0).inData)
-    expect(eastIn == packetFromEastToNorth, "Packet matches east.in")
-    val northIn = peek(r.io.ports(1).inData)
-    expect(northIn == packetFromNorthToEast, "Packet matches north.in")
-
     expect(r.io.ports(0).inReady, 1)
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 0) // output port should be empty
     expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, 0)
-    expect(r.io.ports(1).outData, 0)
+    expect(r.io.ports(0).outData.header.address, 0)
+    expect(r.io.ports(1).outData.header.address, 0)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
@@ -162,8 +193,8 @@ class RouterTest(r: Router) extends Tester(r) {
     // Stop sending data
     poke(r.io.ports(0).inRequest, 0)
     poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, 0)
-    poke(r.io.ports(1).inData, 0)
+//    poke(r.io.ports(0).inData, 0)
+//    poke(r.io.ports(1).inData, 0)
     poke(r.io.ports(0).outReady, 1)
     poke(r.io.ports(1).outReady, 1)
 
@@ -174,8 +205,8 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 0) // output port should still be empty
     expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, 0)
-    expect(r.io.ports(1).outData, 0)
+    expect(r.io.ports(0).outData.header.address, 0)
+    expect(r.io.ports(1).outData.header.address, 0)
 
     expect(r.arbiters(1).granted, East.litValue)
     expect(r.arbiters(1).grantedReady, 1)
@@ -188,8 +219,8 @@ class RouterTest(r: Router) extends Tester(r) {
 
     poke(r.io.ports(0).inRequest, 0)
     poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, 0)
-    poke(r.io.ports(1).inData, 0)
+//    poke(r.io.ports(0).inData, 0)
+//    poke(r.io.ports(1).inData, 0)
     poke(r.io.ports(0).outReady, 1)
     poke(r.io.ports(1).outReady, 1)
 
@@ -199,8 +230,20 @@ class RouterTest(r: Router) extends Tester(r) {
     expect(r.io.ports(1).inReady, 1)
     expect(r.io.ports(0).outRequest, 1)
     expect(r.io.ports(1).outRequest, 1)
-    expect(r.io.ports(0).outData, packetFromNorthToEast)
-    expect(r.io.ports(1).outData, packetFromEastToNorth)
+
+//    expect(r.io.ports(0).outData, packetFromNorthToEast)
+    poke(r.io.ports(0).outData.header.address, 10)
+    poke(r.io.ports(0).outData.dest.x, 2)
+    poke(r.io.ports(0).outData.dest.y, 1)
+    poke(r.io.ports(0).outData.sender.x, 1)
+    poke(r.io.ports(0).outData.sender.y, 0)
+
+//    expect(r.io.ports(1).outData, packetFromEastToNorth)
+    expect(r.io.ports(1).outData.header.address, 15)
+    expect(r.io.ports(1).outData.dest.x, 1)
+    expect(r.io.ports(1).outData.dest.y, 0)
+    expect(r.io.ports(1).outData.sender.x, 2)
+    expect(r.io.ports(1).outData.sender.y, 1)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)

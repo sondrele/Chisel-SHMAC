@@ -7,9 +7,9 @@ class InputPortTest(p: InputPort) extends Tester(p) {
 
   def testFifoIntegration() {
     poke(p.io.fifo.in.valid, 1)
-    poke(p.io.fifo.in.bits, 10)
+    poke(p.io.fifo.in.bits.header.address, 10)
     step(1)
-    expect(p.io.fifo.out.bits, 10)
+    expect(p.io.fifo.out.bits.header.address, 10)
   }
 
   def testInputPortRequest() {
@@ -27,8 +27,10 @@ class InputPortTest(p: InputPort) extends Tester(p) {
     poke(p.io.fifo.in.valid, 1)
     poke(p.io.fifo.out.ready, 0)
 
-    val packet = PacketData.create(yDest = 9, xDest = 15, ySender = 5, xSender = 3)
-    poke(p.io.fifo.in.bits, packet.litValue())
+    poke(p.io.fifo.in.bits.dest.y, 9)
+    poke(p.io.fifo.in.bits.dest.x, 15)
+    poke(p.io.fifo.in.bits.sender.y, 5)
+    poke(p.io.fifo.in.bits.sender.x, 3)
     step(1)
     expect(p.io.yDest, 9)
     expect(p.io.xDest, 15)

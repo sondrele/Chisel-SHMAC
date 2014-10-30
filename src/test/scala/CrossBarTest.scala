@@ -17,18 +17,18 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
 
     for (i <- 0 until 5) {
       if (i == to.index) {
-        expect(c.io.outData(i), value)
+        expect(c.io.outData(i).payload(0), value)
       } else {
-        expect(c.io.outData(i), 0)
+        expect(c.io.outData(i).payload(0), 0)
       }
     }
   }
 
-  poke(c.io.inData(East.index), 1)
-  poke(c.io.inData(North.index), 2)
-  poke(c.io.inData(West.index), 3)
-  poke(c.io.inData(South.index), 4)
-  poke(c.io.inData(Local.index), 5)
+  poke(c.io.inData(East.index).payload(0), 1)
+  poke(c.io.inData(North.index).payload(0), 2)
+  poke(c.io.inData(West.index).payload(0), 3)
+  poke(c.io.inData(South.index).payload(0), 4)
+  poke(c.io.inData(Local.index).payload(0), 5)
   step(1)
 
   // One output can read from one input
@@ -48,11 +48,11 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
   poke(c.io.select(2), South.litValue)
   poke(c.io.select(3), South.litValue)
   poke(c.io.select(4), South.litValue)
-  expect(c.io.outData(0), 4)
-  expect(c.io.outData(1), 4)
-  expect(c.io.outData(2), 4)
-  expect(c.io.outData(3), 4)
-  expect(c.io.outData(4), 4)
+  expect(c.io.outData(0).payload(0), 4)
+  expect(c.io.outData(1).payload(0), 4)
+  expect(c.io.outData(2).payload(0), 4)
+  expect(c.io.outData(3).payload(0), 4)
+  expect(c.io.outData(4).payload(0), 4)
 
   step(1)
 
@@ -62,9 +62,9 @@ class CrossBarTest(c: CrossBar) extends Tester(c) {
   poke(c.io.select(2), North.litValue)
   poke(c.io.select(3), East.litValue)
   poke(c.io.select(4), West.litValue)
-  expect(c.io.outData(0), 4)
-  expect(c.io.outData(1), 5)
-  expect(c.io.outData(2), 2)
-  expect(c.io.outData(3), 1)
-  expect(c.io.outData(4), 3)
+  expect(c.io.outData(0).payload(0), 4)
+  expect(c.io.outData(1).payload(0), 5)
+  expect(c.io.outData(2).payload(0), 2)
+  expect(c.io.outData(3).payload(0), 1)
+  expect(c.io.outData(4).payload(0), 3)
 }
