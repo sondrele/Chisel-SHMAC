@@ -3,14 +3,15 @@ package router
 import Chisel._
 
 class PacketDir extends Bundle {
-  val x = UInt(width = 4)
   val y = UInt(width = 4)
+  val x = UInt(width = 4)
 }
 
 class PacketHeader extends Bundle {
   val error = Bool()
   val exop = Bool()
   val writeMask = Bits(width = 16)
+  val writeReq = Bool()
   val reply = Bool()
   val address = Bits(width = 32)
 }
