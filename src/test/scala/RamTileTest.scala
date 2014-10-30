@@ -1,10 +1,10 @@
-//package test
-//
-//import Chisel._
-//import tiles._
-//import router._
-//
-//class RamTileTest(t: RamTile) extends Tester(t) {
+package test
+
+import Chisel._
+import tiles._
+import router._
+
+class RamTileTest(t: RamTile) extends Tester(t) {
 //  def peekAtRamTile() {
 //    peek(t.ram)
 //    peek(t.router)
@@ -134,4 +134,4 @@
 //  // Cycle 9: The data should now have left the east output port
 //  expect(t.io.ports(0).outData, 0)
 //  expect(t.io.ports(0).outRequest, 0)
-//}
+}
