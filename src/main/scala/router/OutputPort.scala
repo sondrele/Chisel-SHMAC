@@ -4,8 +4,8 @@ import Chisel._
 
 class OutputPort(n: Int) extends Module {
   val io = new Bundle {
-    val fifo = new DecoupledFifoIO(PacketData())
+    val fifo = new DecoupledFifoIO(new PacketBundle())
   }
 
-  io.fifo <> Module(new Fifo(PacketData(), n)).io
+  io.fifo.out <> Queue(io.fifo.in, n)
 }
