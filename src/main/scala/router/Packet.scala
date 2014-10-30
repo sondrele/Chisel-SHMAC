@@ -2,6 +2,53 @@ package router
 
 import Chisel._
 
+class PacketDir extends Bundle {
+  val x = UInt(width = 4)
+  val y = UInt(width = 4)
+}
+
+class PacketHeader extends Bundle {
+  val error = Bool()
+  val exop = Bool()
+  val writeMask = Bits(width = 16)
+  val reply = Bool()
+  val address = Bits(width = 32)
+}
+
+class PacketBundle extends Bundle {
+  val dest = new PacketDir()
+  val sender = new PacketDir()
+  val payload = Vec.fill(16) { UInt(width = 8) }
+  val header = new PacketHeader()
+
+  def assign(other: PacketBundle): Unit = {
+    this.dest.y := other.dest.y
+    this.dest.x := other.dest.x
+    this.sender.y := other.sender.y
+    this.sender.x := other.sender.x
+    this.payload := other.payload
+    this.header.error := other.header.error
+    this.header.exop := other.header.exop
+    this.header.reply := other.header.reply
+    this.header.writeMask := other.header.writeMask
+    this.header.address := other.header.address
+  }
+
+  def init(value: UInt): Unit = {
+    this.dest.y := value
+    this.dest.x := value
+    this.sender.y := value
+    this.sender.x := value
+    this.payload := value
+    this.header.error := value
+    this.header.exop := value
+    this.header.reply := value
+    this.header.writeMask := value
+    this.header.address := value
+  }
+}
+
+
 object PacketData {
   val LENGTH              = 196
 
