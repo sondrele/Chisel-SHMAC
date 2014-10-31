@@ -19,7 +19,7 @@ class PacketHeader extends Bundle {
 class PacketBundle extends Bundle {
   val dest = new PacketDir()
   val sender = new PacketDir()
-  val payload = Vec.fill(16) { UInt(width = 8) }
+  val payload = Bits(width = 128)
   val header = new PacketHeader()
 
   def assign(other: PacketBundle): Unit = {
@@ -30,8 +30,9 @@ class PacketBundle extends Bundle {
     this.payload := other.payload
     this.header.error := other.header.error
     this.header.exop := other.header.exop
-    this.header.reply := other.header.reply
     this.header.writeMask := other.header.writeMask
+    this.header.writeReq := other.header.writeReq
+    this.header.reply := other.header.reply
     this.header.address := other.header.address
   }
 
@@ -43,8 +44,9 @@ class PacketBundle extends Bundle {
     this.payload := value
     this.header.error := value
     this.header.exop := value
-    this.header.reply := value
     this.header.writeMask := value
+    this.header.writeReq := value
+    this.header.reply := value
     this.header.address := value
   }
 }
