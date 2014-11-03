@@ -36,16 +36,11 @@ class Router(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   }
 
   for (i <- 0 until numPorts) {
-    routers(i).port.in.valid := io.ports(i).in.valid
-    routers(i).port.in.bits.assign(io.ports(i).in.bits)
+    io.ports(i) <> routers(i).port
     routers(i).inRead := isGrantedByArbiters(numPorts - 1, i)
     crossbar.inData(i).assign(routers(i).crossbarIn)
-    io.ports(i).in.ready := routers(i).port.in.ready
-    io.ports(i).out.valid := routers(i).port.out.valid
-    io.ports(i).out.bits.assign(routers(i).port.out.bits)
     routers(i).outWrite := arbiters(i).grantedReady
     routers(i).crossbarOut.assign(crossbar.outData(i))
-    routers(i).port.out.ready := io.ports(i).out.ready
     crossbar.select(i) := arbiters(i).granted
   }
 
