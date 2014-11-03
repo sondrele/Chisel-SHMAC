@@ -2,22 +2,26 @@ package router
 
 import Chisel._
 
+class CrossBarPortIO(numPorts: Int) extends Bundle {
+  val inData = new Packet().asInput
+  val select = UInt(INPUT, width = numPorts)
+  val outData = new Packet().asOutput
+}
+
 class CrossBarIO(numPorts: Int) extends Bundle {
-  val inData = Vec.fill(numPorts) { new Packet().asInput }
-  val select = Vec.fill(numPorts) { UInt(INPUT, width = numPorts) }
-  val outData = Vec.fill(numPorts) { new Packet().asOutput }
+  val port = Vec.fill(numPorts) { new CrossBarPortIO(numPorts) }
 }
 
 class CrossBar(numPorts: Int) extends Module {
   val io = new CrossBarIO(numPorts)
 
   for (i <- 0 until numPorts) {
-    io.outData(i).init(UInt(0))
+    io.port(i).outData.init(UInt(0))
 
-    when (io.select(i) != UInt(0)) {
+    when (io.port(i).select != UInt(0)) {
       for (j <- 0 until numPorts) {
-        when(io.select(i)(j)) {
-          io.outData(i).assign(io.inData(j))
+        when(io.port(i).select(j)) {
+          io.port(i).outData.assign(io.port(j).inData)
         }
       }
     }
