@@ -30,9 +30,9 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
   // Issue 8 write-requests to memory with the values 1-8 to
   // the addresses 0-7
   for (i <- 0 until 8) {
-    poke(t.io.ports(0).inRequest, 1)
-    poke(t.io.ports(0).inData, writePacket(i + 1, i))
-    poke(t.io.ports(0).outReady, 0)
+    poke(t.io.ports(0).in.valid, 1)
+    poke(t.io.ports(0).in.bits, writePacket(i + 1, i))
+    poke(t.io.ports(0).out.ready, 0)
     step(1)
   }
 
@@ -41,11 +41,11 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
     // Issue read-requests for the 8 next cycles. Read the written
     // packets in sequential order, at addresses 0-7
     if (i < 8) {
-      poke(t.io.ports(0).inRequest, 1)
-      poke(t.io.ports(0).inData, readPacket(i))
+      poke(t.io.ports(0).in.valid, 1)
+      poke(t.io.ports(0).in.bits, readPacket(i))
     } else {
-      poke(t.io.ports(0).inRequest, 0)
-      poke(t.io.ports(0).inData, emptyPacket)
+      poke(t.io.ports(0).in.valid, 0)
+      poke(t.io.ports(0).in.bits, emptyPacket)
     }
 
     // It takes 2 cycles for the first read-request to arrive at the ram-tile,
@@ -55,17 +55,17 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
     // Four cycles later, the east output fifo should have contain a packet for
     // the first read request
     if (j >= 0 && j < 8) {
-      poke(t.io.ports(0).outReady, 1)
-      expect(t.io.ports(0).outRequest, 1)
+      poke(t.io.ports(0).out.ready, 1)
+      expect(t.io.ports(0).out.valid, 1)
       // Check that the packets is the response with data 1-8 for addresses 0-7
       // and sum together the values when the expected packet is at the output port
-      if (expect(t.io.ports(0).outData, responsePacket(j + 1, j))) {
+      if (expect(t.io.ports(0).out.bits, responsePacket(j + 1, j))) {
         sum += j + 1
       }
     } else {
       // Check that there is no out-request during the cycles
       // that we do not expect to read a packet
-      expect(t.io.ports(0).outRequest, 0)
+      expect(t.io.ports(0).out.valid, 0)
     }
 
     step(1)

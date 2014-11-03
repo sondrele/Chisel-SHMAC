@@ -14,7 +14,7 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) ext
   }
 
   val localPort = router.ports(numPorts)
-  val packet = localPort.outData
+  val packet = localPort.out.bits
   val address = packet.header.address
   val payload = packet.payload
   val isWrite = packet.header.writeReq
@@ -22,21 +22,21 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) ext
 
   val ram = Module(new Ram(depth = memDepth, dataWidth = 128)).io
 
-  ram.reads.valid := localPort.outRequest && isRead
+  ram.reads.valid := localPort.out.valid && isRead
   ram.reads.bits.address := address
 
-  ram.writes.valid := localPort.outRequest && isWrite
+  ram.writes.valid := localPort.out.valid && isWrite
   ram.writes.bits.address := address
   ram.writes.bits.data := payload.toBits()
 
-  localPort.outReady := ram.reads.ready || ram.writes.ready
+  localPort.out.ready := ram.reads.ready || ram.writes.ready
 
   val outPacket = new Packet()
   outPacket.assign(packet)
   outPacket.header.reply := ram.out.valid
   outPacket.payload := ram.out.bits
 
-  ram.out.ready := localPort.inReady
-  localPort.inRequest := ram.out.valid
-  localPort.inData.assign(outPacket)
+  ram.out.ready := localPort.in.ready
+  localPort.in.valid := ram.out.valid
+  localPort.in.bits.assign(outPacket)
 }

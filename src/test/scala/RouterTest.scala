@@ -22,20 +22,20 @@ class RouterTest(r: Router) extends Tester(r) {
   // Sends a packet from east input port, to the north output port,
   // and a packet from the north input port to the east output port the next cycle
   def testDataPathBetweenEastToNorth() {
-    poke(r.io.ports(0).inRequest, 1)
-    poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, packetFromEastToNorth)
-    poke(r.io.ports(1).inData, packetFromNorthToEast)
-    poke(r.io.ports(0).outReady, 0)
-    poke(r.io.ports(1).outReady, 0)
+    poke(r.io.ports(0).in.valid, 1)
+    poke(r.io.ports(1).in.valid, 0)
+    poke(r.io.ports(0).in.bits, packetFromEastToNorth)
+    poke(r.io.ports(1).in.bits, packetFromNorthToEast)
+    poke(r.io.ports(0).out.ready, 0)
+    poke(r.io.ports(1).out.ready, 0)
 
     // Cycle 0: Data arrives router and input port
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 0) // output port should be empty
-    expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, emptyPacket)
-    expect(r.io.ports(1).outData, emptyPacket)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 0) // output port should be empty
+    expect(r.io.ports(1).out.valid, 0)
+    expect(r.io.ports(0).out.bits, emptyPacket)
+    expect(r.io.ports(1).out.bits, emptyPacket)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
@@ -46,22 +46,22 @@ class RouterTest(r: Router) extends Tester(r) {
 
     step(1)
     // Stop sending data
-    poke(r.io.ports(0).inRequest, 0)
-    poke(r.io.ports(1).inRequest, 1)
-    poke(r.io.ports(0).inData, emptyPacket)
-    poke(r.io.ports(1).inData, packetFromNorthToEast)
+    poke(r.io.ports(0).in.valid, 0)
+    poke(r.io.ports(1).in.valid, 1)
+    poke(r.io.ports(0).in.bits, emptyPacket)
+    poke(r.io.ports(1).in.bits, packetFromNorthToEast)
 
-    poke(r.io.ports(0).outReady, 1)
-    poke(r.io.ports(1).outReady, 1)
+    poke(r.io.ports(0).out.ready, 1)
+    poke(r.io.ports(1).out.ready, 1)
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
     // The port granted to send over the crossbar should be east.in
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 0) // output port should still be empty
-    expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, emptyPacket)
-    expect(r.io.ports(1).outData, emptyPacket)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 0) // output port should still be empty
+    expect(r.io.ports(1).out.valid, 0)
+    expect(r.io.ports(0).out.bits, emptyPacket)
+    expect(r.io.ports(1).out.bits, emptyPacket)
 
     expect(r.arbiters(1).granted, East.litValue)
     expect(r.arbiters(1).grantedReady, 1)
@@ -72,21 +72,21 @@ class RouterTest(r: Router) extends Tester(r) {
 
     step(1)
 
-    poke(r.io.ports(0).inRequest, 0)
-    poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, emptyPacket)
-    poke(r.io.ports(1).inData, emptyPacket)
-    poke(r.io.ports(0).outReady, 1)
-    poke(r.io.ports(1).outReady, 1)
+    poke(r.io.ports(0).in.valid, 0)
+    poke(r.io.ports(1).in.valid, 0)
+    poke(r.io.ports(0).in.bits, emptyPacket)
+    poke(r.io.ports(1).in.bits, emptyPacket)
+    poke(r.io.ports(0).out.ready, 1)
+    poke(r.io.ports(1).out.ready, 1)
 
     // Cycle 2: Data reaches the output of the output port, to send it
     // further on to the network
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 0)
-    expect(r.io.ports(1).outRequest, 1)
-    expect(r.io.ports(0).outData, emptyPacket)
-    expect(r.io.ports(1).outData, packetFromEastToNorth)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 0)
+    expect(r.io.ports(1).out.valid, 1)
+    expect(r.io.ports(0).out.bits, emptyPacket)
+    expect(r.io.ports(1).out.bits, packetFromEastToNorth)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
@@ -97,19 +97,19 @@ class RouterTest(r: Router) extends Tester(r) {
 
     step(1)
 
-    poke(r.io.ports(0).inRequest, 0)
-    poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, emptyPacket)
-    poke(r.io.ports(1).inData, emptyPacket)
-    poke(r.io.ports(0).outReady, 1)
-    poke(r.io.ports(1).outReady, 1)
+    poke(r.io.ports(0).in.valid, 0)
+    poke(r.io.ports(1).in.valid, 0)
+    poke(r.io.ports(0).in.bits, emptyPacket)
+    poke(r.io.ports(1).in.bits, emptyPacket)
+    poke(r.io.ports(0).out.ready, 1)
+    poke(r.io.ports(1).out.ready, 1)
 
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 1)
-    expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, packetFromNorthToEast)
-    expect(r.io.ports(1).outData, emptyPacket)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 1)
+    expect(r.io.ports(1).out.valid, 0)
+    expect(r.io.ports(0).out.bits, packetFromNorthToEast)
+    expect(r.io.ports(1).out.bits, emptyPacket)
 
     step(1)
   }
@@ -118,20 +118,20 @@ class RouterTest(r: Router) extends Tester(r) {
   // One from the east input port to the north output port
   // One from the north input port to the east output port
   def testSendingTwoPacketsAtTheSameTime() {
-    poke(r.io.ports(0).inRequest, 1)
-    poke(r.io.ports(1).inRequest, 1)
-    poke(r.io.ports(0).inData, packetFromEastToNorth)
-    poke(r.io.ports(1).inData, packetFromNorthToEast)
-    poke(r.io.ports(0).outReady, 0)
-    poke(r.io.ports(1).outReady, 0)
+    poke(r.io.ports(0).in.valid, 1)
+    poke(r.io.ports(1).in.valid, 1)
+    poke(r.io.ports(0).in.bits, packetFromEastToNorth)
+    poke(r.io.ports(1).in.bits, packetFromNorthToEast)
+    poke(r.io.ports(0).out.ready, 0)
+    poke(r.io.ports(1).out.ready, 0)
 
     // Cycle 0: Data arrives router and input port
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 0) // output port should be empty
-    expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, emptyPacket)
-    expect(r.io.ports(1).outData, emptyPacket)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 0) // output port should be empty
+    expect(r.io.ports(1).out.valid, 0)
+    expect(r.io.ports(0).out.bits, emptyPacket)
+    expect(r.io.ports(1).out.bits, emptyPacket)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
@@ -142,22 +142,22 @@ class RouterTest(r: Router) extends Tester(r) {
 
     step(1)
     // Stop sending data
-    poke(r.io.ports(0).inRequest, 0)
-    poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, emptyPacket)
-    poke(r.io.ports(1).inData, emptyPacket)
-    poke(r.io.ports(0).outReady, 1)
-    poke(r.io.ports(1).outReady, 1)
+    poke(r.io.ports(0).in.valid, 0)
+    poke(r.io.ports(1).in.valid, 0)
+    poke(r.io.ports(0).in.bits, emptyPacket)
+    poke(r.io.ports(1).in.bits, emptyPacket)
+    poke(r.io.ports(0).out.ready, 1)
+    poke(r.io.ports(1).out.ready, 1)
 
     // Cycle 1: Data is at head in input port and traverses through crossbar
     // The port granted to send over the crossbar should be east.in
 
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 0) // output port should still be empty
-    expect(r.io.ports(1).outRequest, 0)
-    expect(r.io.ports(0).outData, emptyPacket)
-    expect(r.io.ports(1).outData, emptyPacket)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 0) // output port should still be empty
+    expect(r.io.ports(1).out.valid, 0)
+    expect(r.io.ports(0).out.bits, emptyPacket)
+    expect(r.io.ports(1).out.bits, emptyPacket)
 
     expect(r.arbiters(1).granted, East.litValue)
     expect(r.arbiters(1).grantedReady, 1)
@@ -168,21 +168,21 @@ class RouterTest(r: Router) extends Tester(r) {
 
     step(1)
 
-    poke(r.io.ports(0).inRequest, 0)
-    poke(r.io.ports(1).inRequest, 0)
-    poke(r.io.ports(0).inData, emptyPacket)
-    poke(r.io.ports(1).inData, emptyPacket)
-    poke(r.io.ports(0).outReady, 1)
-    poke(r.io.ports(1).outReady, 1)
+    poke(r.io.ports(0).in.valid, 0)
+    poke(r.io.ports(1).in.valid, 0)
+    poke(r.io.ports(0).in.bits, emptyPacket)
+    poke(r.io.ports(1).in.bits, emptyPacket)
+    poke(r.io.ports(0).out.ready, 1)
+    poke(r.io.ports(1).out.ready, 1)
 
     // Cycle 2: Data reaches the output of the output port, to send it
     // further on to the network
-    expect(r.io.ports(0).inReady, 1)
-    expect(r.io.ports(1).inReady, 1)
-    expect(r.io.ports(0).outRequest, 1)
-    expect(r.io.ports(1).outRequest, 1)
-    expect(r.io.ports(0).outData, packetFromNorthToEast)
-    expect(r.io.ports(1).outData, packetFromEastToNorth)
+    expect(r.io.ports(0).in.ready, 1)
+    expect(r.io.ports(1).in.ready, 1)
+    expect(r.io.ports(0).out.valid, 1)
+    expect(r.io.ports(1).out.valid, 1)
+    expect(r.io.ports(0).out.bits, packetFromNorthToEast)
+    expect(r.io.ports(1).out.bits, packetFromEastToNorth)
 
     expect(r.arbiters(1).granted, 0)
     expect(r.arbiters(1).grantedReady, 0)
