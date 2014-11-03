@@ -35,7 +35,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.inData, packetFromNorthToNorth)
   poke(a.io.inRead, 1)
 
-  expect(a.input.fifo.out.bits, packetFromNorthToEast)
+  expect(a.input.fifo.deq.bits, packetFromNorthToEast)
   expect(a.io.crossbarIn, packetFromNorthToEast)
   expect(a.io.inReady, 1)
   expect(a.io.outRequest, 0)
@@ -55,7 +55,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.inData.header.address, 0)
   poke(a.io.inRead, 1)
 
-  expect(a.input.fifo.out.bits, packetFromNorthToNorth)
+  expect(a.input.fifo.deq.bits, packetFromNorthToNorth)
   expect(a.io.crossbarIn, packetFromNorthToNorth)
   expect(a.io.inReady, 1)
   expect(a.io.outRequest, 0)
@@ -74,7 +74,7 @@ class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   poke(a.io.inRequest, 0)
   poke(a.io.inData.header.address, 0)
   poke(a.io.inRead, 0)
-  expect(a.input.fifo.out.bits, emptyPacket)
+  expect(a.input.fifo.deq.bits, emptyPacket)
   expect(a.io.crossbarIn, emptyPacket)
   expect(a.io.inReady, 1)
   expect(a.io.outRequest, 1)

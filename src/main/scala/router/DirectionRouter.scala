@@ -24,18 +24,18 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
   val io = new DirectionRouterIO()
 
   val input = Module(new InputPort(numRecords)).io
-  input.fifo.in.valid := io.inRequest
-  input.fifo.out.ready := io.inRead
-  input.fifo.in.bits.assign(io.inData)
-  io.inReady := input.fifo.in.ready
-  io.crossbarIn.assign(input.fifo.out.bits)
+  input.fifo.enq.valid := io.inRequest
+  input.fifo.deq.ready := io.inRead
+  input.fifo.enq.bits.assign(io.inData)
+  io.inReady := input.fifo.enq.ready
+  io.crossbarIn.assign(input.fifo.deq.bits)
 
   val output = Module(new OutputPort(numRecords)).io
-  output.fifo.in.valid := io.outWrite
-  output.fifo.out.ready := io.outReady
-  output.fifo.in.bits.assign(io.crossbarOut)
-  io.outRequest := output.fifo.out.valid
-  io.outData.assign(output.fifo.out.bits)
+  output.fifo.enq.valid := io.outWrite
+  output.fifo.deq.ready := io.outReady
+  output.fifo.enq.bits.assign(io.crossbarOut)
+  io.outRequest := output.fifo.deq.valid
+  io.outData.assign(output.fifo.deq.bits)
 
   val destRoute = Module(new RouteComputation()).io
   destRoute.xCur := tileX
@@ -43,12 +43,12 @@ class DirectionRouter(tileX: UInt, tileY: UInt, numRecords: Int) extends Module 
   destRoute.xDest := input.xDest
   destRoute.yDest := input.yDest
 
-  when (input.fifo.out.valid) {
+  when (input.fifo.deq.valid) {
     io.direction := destRoute.dest
   }.otherwise {
     io.direction := UInt(0)
   }
 
-  io.isEmpty := !input.fifo.out.valid
-  io.isFull := !output.fifo.in.ready
+  io.isEmpty := !input.fifo.deq.valid
+  io.isFull := !output.fifo.enq.ready
 }
