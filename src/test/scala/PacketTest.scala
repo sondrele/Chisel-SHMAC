@@ -21,17 +21,17 @@ class PacketTestModule extends Module {
 
   val data = io.packet.toBits().toUInt()
 
-  io.yDest      := data(PacketConsts.Y_DEST_END, PacketConsts.Y_DEST_BEGIN)
-  io.xDest      := data(PacketConsts.X_DEST_END, PacketConsts.X_DEST_BEGIN)
-  io.ySender    := data(PacketConsts.Y_SEND_END, PacketConsts.Y_SEND_BEGIN)
-  io.xSender    := data(PacketConsts.X_SEND_END, PacketConsts.X_SEND_BEGIN)
-  io.payload    := data(PacketConsts.DATA_END, PacketConsts.DATA_BEGIN)
-  io.isError    := data(PacketConsts.ERROR_INDEX).toBool()
-  io.isExop     := data(PacketConsts.EXOP_INDEX).toBool()
-  io.writeMask  := data(PacketConsts.WRITE_MASK_END, PacketConsts.WRITE_MASK_BEGIN)
-  io.isWriteReq := data(PacketConsts.WRITE_REQUEST_INDEX).toBool()
-  io.isReply    := data(PacketConsts.REPLY_INDEX).toBool()
-  io.address    := data(PacketConsts.ADDRESS_END, PacketConsts.ADDRESS_BEGIN)
+  io.yDest      := data(Packet.Y_DEST_END, Packet.Y_DEST_BEGIN)
+  io.xDest      := data(Packet.X_DEST_END, Packet.X_DEST_BEGIN)
+  io.ySender    := data(Packet.Y_SEND_END, Packet.Y_SEND_BEGIN)
+  io.xSender    := data(Packet.X_SEND_END, Packet.X_SEND_BEGIN)
+  io.payload    := data(Packet.DATA_END, Packet.DATA_BEGIN)
+  io.isError    := data(Packet.ERROR_INDEX).toBool()
+  io.isExop     := data(Packet.EXOP_INDEX).toBool()
+  io.writeMask  := data(Packet.WRITE_MASK_END, Packet.WRITE_MASK_BEGIN)
+  io.isWriteReq := data(Packet.WRITE_REQUEST_INDEX).toBool()
+  io.isReply    := data(Packet.REPLY_INDEX).toBool()
+  io.address    := data(Packet.ADDRESS_END, Packet.ADDRESS_BEGIN)
 }
 
 class PacketTestModuleTest(m: PacketTestModule) extends Tester(m) {

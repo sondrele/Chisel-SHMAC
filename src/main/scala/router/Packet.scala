@@ -51,7 +51,7 @@ class Packet extends Bundle {
   }
 }
 
-object PacketConsts {
+object Packet {
   val LENGTH              = 196
 
   val Y_DEST_END          = 195
