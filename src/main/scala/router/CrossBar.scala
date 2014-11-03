@@ -3,9 +3,9 @@ package router
 import Chisel._
 
 class CrossBarIO(numPorts: Int) extends Bundle {
-  val inData = Vec.fill(numPorts) { new PacketBundle().asInput }
+  val inData = Vec.fill(numPorts) { new Packet().asInput }
   val select = Vec.fill(numPorts) { UInt(INPUT, width = numPorts) }
-  val outData = Vec.fill(numPorts) { new PacketBundle().asOutput }
+  val outData = Vec.fill(numPorts) { new Packet().asOutput }
 }
 
 class CrossBar(numPorts: Int) extends Module {

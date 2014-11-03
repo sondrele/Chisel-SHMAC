@@ -4,10 +4,10 @@ import Chisel._
 
 class RouterPortIO extends Bundle {
   val inRequest  = Bool(INPUT)        // Request to write into router
-  val inData     = new PacketBundle().asInput  // Data to write
+  val inData     = new Packet().asInput  // Data to write
   val inReady    = Bool(OUTPUT)       // True if input port is not full
   val outRequest = Bool(OUTPUT)       // Router requesting to send data
-  val outData    = new PacketBundle().asOutput // Data to send
+  val outData    = new Packet().asOutput // Data to send
   val outReady   = Bool(INPUT)        // True to request output to send data
 }
 

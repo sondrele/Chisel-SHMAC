@@ -4,7 +4,7 @@ import Chisel._
 
 class InputPort(n: Int) extends Module {
   val io = new Bundle {
-    val fifo = new QueueIO(new PacketBundle(), n)
+    val fifo = new QueueIO(new Packet(), n)
 
     val xDest = UInt(OUTPUT, width = 4)
     val yDest = UInt(OUTPUT, width = 4)

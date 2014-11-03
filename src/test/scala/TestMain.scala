@@ -46,8 +46,8 @@ object TestMain {
     case "DirectionArbiter" => chiselMainTest(args, () => Module(new DirectionArbiter(5))) {
       b => new DirectionArbiterTest(b)
     }
-    case "Packet" => chiselMainTest(args, () => Module(new PacketDataTestModule())) {
-      b => new PacketDataTestModuleTest(b)
+    case "Packet" => chiselMainTest(args, () => Module(new PacketTestModule())) {
+      b => new PacketTestModuleTest(b)
     }
     case "DirectionRouter" => chiselMainTest(args, () => Module(new DirectionRouter(UInt(1), UInt(1), 4))) {
       b => new DirectionRouterTest(b)

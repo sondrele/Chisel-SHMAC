@@ -31,7 +31,7 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) ext
 
   localPort.outReady := ram.reads.ready || ram.writes.ready
 
-  val outPacket = new PacketBundle()
+  val outPacket = new Packet()
   outPacket.assign(packet)
   outPacket.header.reply := ram.out.valid
   outPacket.payload := ram.out.bits

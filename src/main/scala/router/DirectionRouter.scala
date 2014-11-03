@@ -4,14 +4,14 @@ import Chisel._
 
 class DirectionRouterIO extends Bundle {
   val inRequest = Bool(INPUT)
-  val inData = new PacketBundle().asInput
+  val inData = new Packet().asInput
   val inRead = Bool(INPUT)
-  val crossbarIn = new PacketBundle().asOutput
+  val crossbarIn = new Packet().asOutput
   val inReady = Bool(OUTPUT)
   val outRequest = Bool(OUTPUT)
-  val outData = new PacketBundle().asOutput
+  val outData = new Packet().asOutput
   val outWrite = Bool(INPUT)
-  val crossbarOut = new PacketBundle().asInput
+  val crossbarOut = new Packet().asInput
   val outReady = Bool(INPUT)
   // Destination of the packet
   val direction = UInt(OUTPUT, width = 5)
