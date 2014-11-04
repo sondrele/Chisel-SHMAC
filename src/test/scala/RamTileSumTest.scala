@@ -27,9 +27,10 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
   // ResponsePackets has writeReq == false and reply == true
   def responsePacket(data: Int, addr: Int) = Array[BigInt](addr, 1, 0, 0, 0, 0, data, 2, 1, 1, 1)
 
+  val memDepth = 128
   // Issue 8 write-requests to memory with the values 1-8 to
   // the addresses 0-7
-  for (i <- 0 until 8) {
+  for (i <- 0 until memDepth) {
     poke(t.io.ports(0).in.valid, 1)
     poke(t.io.ports(0).in.bits, writePacket(i + 1, i))
     poke(t.io.ports(0).out.ready, 0)
@@ -37,10 +38,10 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
   }
 
   var sum = 0
-  for (i <- 0 until 13) {
+  for (i <- 0 until memDepth + 5) {
     // Issue read-requests for the 8 next cycles. Read the written
     // packets in sequential order, at addresses 0-7
-    if (i < 8) {
+    if (i < memDepth) {
       poke(t.io.ports(0).in.valid, 1)
       poke(t.io.ports(0).in.bits, readPacket(i))
     } else {
@@ -54,7 +55,7 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
 
     // Four cycles later, the east output fifo should have contain a packet for
     // the first read request
-    if (j >= 0 && j < 8) {
+    if (j >= 0 && j < memDepth) {
       poke(t.io.ports(0).out.ready, 1)
       expect(t.io.ports(0).out.valid, 1)
       // Check that the packets is the response with data 1-8 for addresses 0-7
@@ -70,6 +71,6 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
 
     step(1)
   }
-
-  expect(sum == 36, s"Should sum correctly $sum == 36")
+  val expectedSum = (1 to memDepth).sum
+  expect(sum == expectedSum, s"Should sum correctly $sum == $expectedSum")
 }
