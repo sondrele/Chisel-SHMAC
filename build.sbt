@@ -6,6 +6,6 @@ addSbtPlugin("com.github.scct" % "sbt-scct" % "0.2.1")
 
 libraryDependencies += "edu.berkeley.cs" %% "chisel" % "latest.release"
 
-scalacOptions ++= Seq("-feature", "-language:reflectiveCalls")
+scalacOptions ++= Seq("-deprecation", "-feature", "-language:reflectiveCalls")
 
 scalaSource in Compile := baseDirectory.value / "src"

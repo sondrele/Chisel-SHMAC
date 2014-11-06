@@ -22,7 +22,7 @@ testall:
 	$(SBT) "$(RUN) $(@:.out=) $(TARGET) $(SW) $(TEST)"
 
 verilog:
-	$(SBT) "$(RUN) $(TARGET) $(HW)"
+	$(SBT) "run $@ $(HW)"
 
 clean:
 	$(SBT) clean
