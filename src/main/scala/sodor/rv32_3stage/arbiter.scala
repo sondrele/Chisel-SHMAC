@@ -24,10 +24,10 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
 
    val io = new Bundle
    {
-      // TODO I need to come up with better names... this is too confusing 
+      // TODO I need to come up with better names... this is too confusing
       // from the point of view of the other modules
       val imem = new MemPortIo(conf.xprlen).flip // instruction fetch
-      val dmem = new MemPortIo(conf.xprlen).flip // load/store 
+      val dmem = new MemPortIo(conf.xprlen).flip // load/store
       val mem  = new MemPortIo(conf.xprlen)      // the single-ported memory
    }
 
@@ -42,8 +42,8 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
    val req_fire_imem = Bool()
 
    // default
-   req_fire_dmem := Bool(false) 
-   req_fire_imem := Bool(false) 
+   req_fire_dmem := Bool(false)
+   req_fire_imem := Bool(false)
 
    when (io.dmem.req.valid)
    {
@@ -53,7 +53,7 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
    {
       req_fire_imem := Bool(true)
    }
- 
+
    req_fire_imem_reg := req_fire_imem;
    req_fire_dmem_reg := req_fire_dmem;
 
@@ -89,6 +89,7 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
 
    io.mem.req.valid     := io.imem.req.valid
    io.mem.req.bits.addr := io.imem.req.bits.addr
+   io.mem.req.bits.data := io.imem.req.bits.data
    io.mem.req.bits.fcn  := io.imem.req.bits.fcn
    io.mem.req.bits.typ  := io.imem.req.bits.typ
 
@@ -96,10 +97,11 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
    {
       io.mem.req.valid     := io.dmem.req.valid
       io.mem.req.bits.addr := io.dmem.req.bits.addr
+      io.mem.req.bits.data := io.dmem.req.bits.data
       io.mem.req.bits.fcn  := io.dmem.req.bits.fcn
       io.mem.req.bits.typ  := io.dmem.req.bits.typ
    }
-   io.mem.req.bits.data := io.dmem.req.bits.data
+//  io.mem.req.bits.data := io.dmem.req.bits.data
 
    when (outstanding_id === MID_IMEM && !io.dmem.req.valid)
    {
@@ -107,7 +109,7 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
    }
    .otherwise
    {
-      io.mem.resp.ready := Bool(true)
+      io.mem.resp.ready := Bool(true) // io.dmem.resp.ready
    }
 
    //***************************
@@ -124,9 +126,10 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
       io.dmem.resp.valid := io.mem.resp.valid
    }
    io.imem.resp.bits.data := io.mem.resp.bits.data
-   io.dmem.resp.bits.data := io.mem.resp.bits.data
    io.imem.resp.bits.addr := io.mem.resp.bits.addr
+
+   io.dmem.resp.bits.data := io.mem.resp.bits.data
    io.dmem.resp.bits.addr := io.mem.resp.bits.addr
 }
- 
+
 }
