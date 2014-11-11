@@ -5,6 +5,8 @@ import tiles._
 
 class SodorTileTest(t: SodorTile) extends Tester(t) {
   import t.unit.{io => sodor}
+  import t.io.host
+
   def checkCoreOutputs(mem_req_addr: Option[Int] = None,
                        host_ipi_req_valid: Int = 0,
                        host_csr_rep_valid: Int = 0) {
@@ -30,7 +32,7 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
     expect(t.localPort.out.ready, 1)
   }
 
-  poke(sodor.host.reset, 1)
+  poke(host.reset, 1)
   poke(sodor.mem.req.ready, 0)
   poke(sodor.host.csr_req.valid, 0)
   poke(sodor.host.ipi_rep.valid, 0)
@@ -45,6 +47,7 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   step(1)
   checkSodorMemoryRequests()
   step(1)
+  poke(host.reset, 0)
 //  poke(t.sodor.io.mem.req.ready, 1)
 //  poke(t.sodor.io.mem.resp.valid, 1)
 //  poke(t.sodor.io.mem.resp.bits.data, 0x6f) //Branch to self
