@@ -4,15 +4,14 @@ import Chisel._
 import tiles._
 
 class SodorTileTest(t: SodorTile) extends Tester(t) {
-  import t.io.sodor
-
+  import t.unit.{io => sodor}
   def checkCoreOutputs(mem_req_addr: Option[Int] = None,
                        host_ipi_req_valid: Int = 0,
                        host_csr_rep_valid: Int = 0) {
 
     mem_req_addr match {
       case Some(addr) =>
-        expect(sodor.mem.req.valid, 1)
+        expect(t.unit.io.mem.req.valid, 1)
         expect(sodor.mem.req.bits.addr, addr)
       case None =>
         expect(sodor.mem.req.valid, 0)
@@ -25,7 +24,7 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   def checkSodorMemoryRequests(): Unit = {
     expect(t.unit.core.io.imem.resp.ready, 1) // Ready to receive next instruction
     expect(t.unit.arbiter.io.mem.resp.ready, 1) // Expecting the above signal go through to this
-    peek(t.io.sodor.mem)
+    peek(sodor.mem)
     peek(t.unit.arbiter.io.mem)
     expect(t.unit.io.mem.resp.ready, 1)
     expect(t.localPort.out.ready, 1)
@@ -51,10 +50,8 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
 //  poke(t.sodor.io.mem.resp.bits.data, 0x6f) //Branch to self
 
   peek(t.unit.core.io.imem)
-  peek(t.io.sodor)
 
   step(1)
   peek(t.unit.core.io.imem)
-  peek(t.io.sodor)
 //  checkCoreOutputs()
 }
