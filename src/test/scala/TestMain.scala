@@ -1,4 +1,5 @@
 import Chisel._
+import Sodor.ShmacUnit
 import router._
 import tiles._
 import test._
@@ -18,6 +19,7 @@ object TestMain {
       "Router",
       "Ram",
       "RamTile",
+      "ShmacUnit",
       "SodorTile"
     )
 
@@ -65,10 +67,13 @@ object TestMain {
        new RamTileSumTest(t)
      }
    }
+   case "ShmacUnit" => chiselMainTest(args, () => Module(new ShmacUnit())) {
+     t => new ShmacUnitTest(t)
+   }
    case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
      t => new SodorTileTest(t)
    }
-    case other => sys.error(s"No module with name $other")
+   case other => sys.error(s"No module with name $other")
   }
 
 }

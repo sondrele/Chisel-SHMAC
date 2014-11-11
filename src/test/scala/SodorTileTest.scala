@@ -1,4 +1,4 @@
-class test
+package test
 
 import Chisel._
 import tiles._
@@ -48,13 +48,16 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   checkSodorMemoryRequests()
   step(1)
   poke(host.reset, 0)
-//  poke(t.sodor.io.mem.req.ready, 1)
-//  poke(t.sodor.io.mem.resp.valid, 1)
-//  poke(t.sodor.io.mem.resp.bits.data, 0x6f) //Branch to self
+//  poke(t.unit.io.mem.req.ready, 1)
+  expect(sodor.mem.resp.ready, 1)
+  poke(sodor.mem.resp.valid, 1)
+  poke(sodor.mem.resp.bits.data, 0x6f) //Branch to self
 
   peek(t.unit.core.io.imem)
 
   step(1)
   peek(t.unit.core.io.imem)
-//  checkCoreOutputs()
+
+  step(1)
+  peek(t.unit.core.io.imem)
 }
