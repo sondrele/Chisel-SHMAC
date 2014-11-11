@@ -23,11 +23,11 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   }
 
   def checkSodorMemoryRequests(): Unit = {
-    expect(t.sodor.core.io.imem.resp.ready, 1) // Ready to receive next instruction
-    expect(t.sodor.arbiter.io.mem.resp.ready, 1) // Expecting the above signal go through to this
+    expect(t.unit.core.io.imem.resp.ready, 1) // Ready to receive next instruction
+    expect(t.unit.arbiter.io.mem.resp.ready, 1) // Expecting the above signal go through to this
     peek(t.io.sodor.mem)
-    peek(t.sodor.arbiter.io.mem)
-    expect(t.sodor.io.mem.resp.ready, 1)
+    peek(t.unit.arbiter.io.mem)
+    expect(t.unit.io.mem.resp.ready, 1)
     expect(t.localPort.out.ready, 1)
   }
 
@@ -50,11 +50,11 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
 //  poke(t.sodor.io.mem.resp.valid, 1)
 //  poke(t.sodor.io.mem.resp.bits.data, 0x6f) //Branch to self
 
-  peek(t.sodor.core.io.imem)
+  peek(t.unit.core.io.imem)
   peek(t.io.sodor)
 
   step(1)
-  peek(t.sodor.core.io.imem)
+  peek(t.unit.core.io.imem)
   peek(t.io.sodor)
 //  checkCoreOutputs()
 }

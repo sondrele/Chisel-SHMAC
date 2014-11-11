@@ -19,8 +19,8 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
     io.ports(i) <> router.ports(i)
   }
 
-  val sodor = Module(new ShmacUnit())
-  sodor.io.host <> io.sodor.host
+  val unit = Module(new ShmacUnit())
+  unit.io.host <> io.sodor.host
 
   val localPort = router.ports(numPorts)
   val packet = localPort.out.bits
@@ -28,20 +28,20 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   val payload = packet.payload
   val isResponse = packet.header.reply
 
-  localPort.out.ready := sodor.io.mem.resp.ready
-  sodor.io.mem.resp.valid := localPort.out.valid && isResponse
-  sodor.io.mem.resp.bits.addr := address
-  sodor.io.mem.resp.bits.data := payload
+  localPort.out.ready := unit.io.mem.resp.ready
+  unit.io.mem.resp.valid := localPort.out.valid && isResponse
+  unit.io.mem.resp.bits.addr := address
+  unit.io.mem.resp.bits.data := payload
 
   val outPacket = new Packet()
   outPacket.sender.y := UInt(y)
   outPacket.sender.x := UInt(x)
-  outPacket.payload := sodor.io.mem.req.bits.data
+  outPacket.payload := unit.io.mem.req.bits.data
   outPacket.header.writeReq := Bool(true)
-  outPacket.header.address := sodor.io.mem.req.bits.addr
+  outPacket.header.address := unit.io.mem.req.bits.addr
 
-  sodor.io.mem.req.ready := localPort.in.ready
-  localPort.in.valid := sodor.io.mem.req.valid
+  unit.io.mem.req.ready := localPort.in.ready
+  localPort.in.valid := unit.io.mem.req.valid
   localPort.in.bits.assign(outPacket)
 }
 
