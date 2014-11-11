@@ -107,9 +107,15 @@ class SodorMemArbiter(implicit val conf: SodorConfiguration) extends Module
    {
       io.mem.resp.ready := io.imem.resp.ready
    }
+   .elsewhen(io.dmem.resp.ready) {
+     // Chisel gave errors when peeking this arbiters io when
+     // io.dmem.resp.ready was not used internally, this is just
+     // a hack in order to wire up the signals internally
+     io.mem.resp.ready := io.dmem.resp.ready
+   }
    .otherwise
    {
-      io.mem.resp.ready := Bool(true) // io.dmem.resp.ready
+      io.mem.resp.ready := Bool(true)
    }
 
    //***************************
