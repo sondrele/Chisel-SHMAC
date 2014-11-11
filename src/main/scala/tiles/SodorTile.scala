@@ -19,24 +19,34 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
     io.ports(i) <> router.ports(i)
   }
 
-  val sodor = Module(new ShmacUnit()).io
-  sodor.host <> io.sodor.host
+  val sodor = Module(new ShmacUnit())
+  sodor.io.host <> io.sodor.host
 
   val localPort = router.ports(numPorts)
   val packet = localPort.out.bits
   val address = packet.header.address
   val payload = packet.payload
-  val isReply = packet.header.reply
+  val isResponse = packet.header.reply
 
-  // localPort.out.valid
-  // localPort.out.ready := ram.reads.ready || ram.writes.ready
+  localPort.out.ready := sodor.io.mem.resp.ready
+  sodor.io.mem.resp.valid := localPort.out.valid && isResponse
+  sodor.io.mem.resp.bits.addr := address
+  sodor.io.mem.resp.bits.data := payload
 
-  // val outPacket = new Packet()
-  // outPacket.assign(packet)
-  // outPacket.header.reply := ram.out.valid
-  // outPacket.payload := ram.out.bits
+  val outPacket = new Packet()
+  outPacket.sender.y := UInt(y)
+  outPacket.sender.x := UInt(x)
+  outPacket.payload := sodor.io.mem.req.bits.data
+  outPacket.header.writeReq := Bool(true)
+  outPacket.header.address := sodor.io.mem.req.bits.addr
 
-  // ram.out.ready := localPort.in.ready
-  // localPort.in.valid := ram.out.valid
-  // localPort.in.bits.assign(outPacket)
+  sodor.io.mem.req.ready := localPort.in.ready
+  localPort.in.valid := sodor.io.mem.req.valid
+  localPort.in.bits.assign(outPacket)
+}
+
+object elaborate {
+  def main(args: Array[String]): Unit = {
+    chiselMain(args, () => Module(new SodorTile(1, 1, 4, 1)))
+  }
 }
