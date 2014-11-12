@@ -76,11 +76,12 @@ trait ScalarOpConstants
    val REN_X   = Bool(false)
            
    // Writeback Select Signal
-   val WB_ALU  = UInt(0, 2)
-   val WB_MEM  = UInt(1, 2)
-   val WB_PC4  = UInt(2, 2)
-   val WB_CSR  = UInt(3, 2)
-   val WB_X    = UInt(0, 2)
+   val WB_ALU  = UInt(0, 3)
+   val WB_MEM  = UInt(1, 3)
+   val WB_PC4  = UInt(2, 3)
+   val WB_CSR  = UInt(3, 3)
+   val WB_EXC  = UInt(4, 3)
+   val WB_X    = UInt(0, 3)
    
    // Memory Function Type (Read,Write,Fence) Signal
    val MWR_R   = UInt(0, 2)

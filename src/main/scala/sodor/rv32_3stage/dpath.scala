@@ -32,6 +32,7 @@ class DatToCtlIo extends Bundle()
 
 class DpathIo(implicit conf: SodorConfiguration) extends Bundle() 
 {
+   val irq = Bool(INPUT)
    val host  = new HTIFIO()
    val imem = new FrontEndCpuIO().flip()
    val dmem = new MemPortIo(conf.xprlen)
@@ -79,6 +80,7 @@ class DatPath(implicit conf: SodorConfiguration) extends Module
    val exe_valid = io.imem.resp.valid
    val exe_inst  = io.imem.resp.bits.inst
    val exe_pc    = io.imem.resp.bits.pc
+   val last_exe_pc = Reg(outType = UInt(width = conf.xprlen))
    
    // Decode
    val exe_rs1_addr = exe_inst(RS1_MSB, RS1_LSB)
@@ -172,8 +174,11 @@ class DatPath(implicit conf: SodorConfiguration) extends Module
       wb_reg_ctrl.rf_wen    := Bool(false)
       wb_reg_ctrl.csr_cmd   := CSR.N
       wb_reg_ctrl.dmem_val  := Bool(false)
-      wb_reg_ctrl.exception := Bool(false)
+   }
+   when (wb_hazard_stall)
+   {
       wb_reg_ctrl.sret      := Bool(false)
+      wb_reg_ctrl.exception := Bool(false)
    }
 
    wb_reg_alu      := exe_alu_out
@@ -192,6 +197,7 @@ class DatPath(implicit conf: SodorConfiguration) extends Module
    io.dmem.req.valid     := io.ctl.dmem_val && !req_sent
    io.dmem.req.bits.fcn  := io.ctl.dmem_fcn
    io.dmem.req.bits.typ  := io.ctl.dmem_typ
+   io.dmem.req.bits.excl := io.ctl.dmem_excl
    io.dmem.req.bits.addr := exe_alu_out
    io.dmem.req.bits.data := exe_rs2_data
                                  
@@ -212,11 +218,17 @@ class DatPath(implicit conf: SodorConfiguration) extends Module
       wb_reg_valid    := exe_valid
    }
 
+   when (exe_valid && !wb_hazard_stall)
+   {
+      last_exe_pc := exe_pc
+   }
+
    wb_reg_csr_addr := exe_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
  
    // Control Status Registers
    val csr = Module(new CSRFile())
    val csr_cmd = wb_reg_ctrl.csr_cmd
+   csr.io.irq <> io.irq
    csr.io.host <> io.host
    csr.io.rw.addr   := wb_reg_csr_addr
    csr.io.rw.wdata  := Mux(csr_cmd=== CSR.S, csr.io.rw.rdata |  wb_reg_alu,
@@ -227,26 +239,33 @@ class DatPath(implicit conf: SodorConfiguration) extends Module
 
    csr.io.retire    := wb_reg_valid
    csr.io.exception := wb_reg_ctrl.exception
+   csr.io.exception_mux := io.ctl.exception
    csr.io.cause     := wb_reg_ctrl.exc_cause
    csr.io.sret      := wb_reg_ctrl.sret
-   csr.io.pc        := exe_pc - UInt(4)
    exception_target := csr.io.evec
    io.dat.status    := csr.io.status
+
+   val exe_pc4 = exe_pc + UInt(4, conf.xprlen)
+
+   when (wb_reg_ctrl.interrupt)
+   {
+      csr.io.pc        := last_exe_pc
+   }
+   .otherwise
+   {
+      csr.io.pc        := exe_pc4
+   }
 
    // Add your own uarch counters here!
    csr.io.uarch_counters.foreach(_ := Bool(false))
 
    // WB Mux                                                                   
-   // Note: I'm relying on the fact that the EXE stage is holding the
-   // instruction behind our jal, which assumes we always predict PC+4, and we
-   // don't clear the "mispredicted" PC when we jump.
-   require (PREDICT_PCP4==true)
-
    wb_wbdata := MuxCase(wb_reg_alu, Array(
                   (wb_reg_ctrl.wb_sel === WB_ALU) -> wb_reg_alu,
                   (wb_reg_ctrl.wb_sel === WB_MEM) -> Reg(next=io.dmem.resp.bits.data), 
-                  (wb_reg_ctrl.wb_sel === WB_PC4) -> exe_pc,
-                  (wb_reg_ctrl.wb_sel === WB_CSR) -> csr_out
+                  (wb_reg_ctrl.wb_sel === WB_PC4) -> exe_pc4,
+                  (wb_reg_ctrl.wb_sel === WB_CSR) -> csr_out,
+                  (wb_reg_ctrl.wb_sel === WB_EXC) -> Reg(next=io.dmem.resp.bits.error)
                   )).toSInt()
                                 
    
@@ -317,6 +336,7 @@ class DatPath(implicit conf: SodorConfiguration) extends Module
       wb_reg_ctrl.dmem_val  := Bool(false)
       wb_reg_ctrl.exception := Bool(false)
       wb_reg_ctrl.sret      := Bool(false)
+      last_exe_pc := UInt(0)
    }
  
 }

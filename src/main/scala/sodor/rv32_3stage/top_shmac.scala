@@ -11,6 +11,7 @@ import scala.collection.mutable.HashMap
 
 class ShmacUnitIO(implicit val conf: SodorConfiguration) extends Bundle
 {
+  val irq = Bool(INPUT)
   val host = new HTIFIO()
   val mem  = new MemPortIo(conf.xprlen)
 }
@@ -24,9 +25,11 @@ class ShmacUnit extends Module
   val core   = Module(new Core(resetSignal = io.host.reset))
   val arbiter = Module(new SodorMemArbiter())
 
-  arbiter.io.mem <> io.mem
+  core.io.irq <> io.irq
+
   core.io.imem <> arbiter.io.imem
   core.io.dmem <> arbiter.io.dmem
+  arbiter.io.mem <> io.mem
 
   core.io.host <> io.host
   // Connect other loose wires
@@ -35,4 +38,10 @@ class ShmacUnit extends Module
   io.host.mem_rep.bits := core.io.host.mem_rep.bits
 
   arbiter.io.imem.req.bits.data := core.io.imem.req.bits.data
+}
+
+object ShmacUnit {
+  def main(args: Array[String]): Unit = {
+    chiselMain(args, () => Module(new ShmacUnit()))
+  }
 }

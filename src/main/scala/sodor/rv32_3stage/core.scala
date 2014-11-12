@@ -11,6 +11,7 @@ import Common._
 
 class CoreIo(implicit conf: SodorConfiguration) extends Bundle 
 {
+  val irq = Bool(INPUT)
   val host = new HTIFIO()
   val imem = new MemPortIo(conf.xprlen)
   val dmem = new MemPortIo(conf.xprlen)
@@ -34,6 +35,8 @@ class Core(resetSignal: Bool = null)(implicit conf: SodorConfiguration) extends 
    cpath.io.dmem <> io.dmem
    dpath.io.dmem <> io.dmem
    
+   dpath.io.irq <> io.irq
+
    dpath.io.host <> io.host
 }
 

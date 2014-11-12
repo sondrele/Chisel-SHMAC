@@ -37,6 +37,7 @@ object CSR
 class CSRFile(implicit conf: SodorConfiguration) extends Module
 {
    val io = new Bundle {
+      val irq = Bool(INPUT)
       val host = new HTIFIO()
       val rw = new Bundle {
          val addr = UInt(INPUT, 12)
@@ -49,6 +50,7 @@ class CSRFile(implicit conf: SodorConfiguration) extends Module
       val ptbr = UInt(OUTPUT, PADDR_BITS)
       val evec = UInt(OUTPUT, VADDR_BITS+1)
       val exception = Bool(INPUT)
+      val exception_mux = Bool(INPUT)
       val retire = Bool(INPUT)
       val uarch_counters = Vec.fill(16)(Bool(INPUT))
       val cause = UInt(INPUT, conf.xprlen)
@@ -119,10 +121,10 @@ class CSRFile(implicit conf: SodorConfiguration) extends Module
   val wdata = Mux(cpu_req_valid, io.rw.wdata, host_csr_bits.data)
 
   io.status := reg_status
-  io.status.ip := Cat(r_irq_timer, reg_fromhost.orR, r_irq_ipi,   Bool(false),
+  io.status.ip := Cat(r_irq_timer, reg_fromhost.orR, r_irq_ipi,   io.irq,
                       Bool(false), Bool(false),      Bool(false), Bool(false))
   io.fatc := wen && decoded_addr(CSRs.fatc)
-  io.evec := Mux(io.exception, reg_evec.toSInt, reg_epc).toUInt
+  io.evec := Mux(io.exception_mux, reg_evec.toSInt, reg_epc).toUInt
   io.ptbr := reg_ptbr
 
   when (io.badvaddr_wen) {

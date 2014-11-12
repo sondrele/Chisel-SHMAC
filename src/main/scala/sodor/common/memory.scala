@@ -42,7 +42,7 @@ trait MemoryOpConstants
 class MemPortIo(data_width: Int)(implicit conf: SodorConfiguration) extends Bundle 
 {
    val req    = Decoupled(new MemReq(data_width))
-   val resp   = Decoupled(new MemResp(data_width)).flip()
+   val resp   = (new DecoupledIO(new MemResp(data_width))).flip
   override def clone = { new MemPortIo(data_width).asInstanceOf[this.type] }
 }
 
@@ -52,6 +52,7 @@ class MemReq(data_width: Int)(implicit conf: SodorConfiguration) extends Bundle
    val data = Bits(width = data_width)
    val fcn  = Bits(width = M_X.getWidth)  // memory function code
    val typ  = Bits(width = MT_X.getWidth) // memory type
+   val excl = Bool()
   override def clone = { new MemReq(data_width).asInstanceOf[this.type] }
 }
 
@@ -59,6 +60,7 @@ class MemResp(data_width: Int)(implicit conf: SodorConfiguration) extends Bundle
 {
    val addr = UInt(width = conf.xprlen)
    val data = Bits(width = data_width)
+   val error = Bool()
   override def clone = { new MemResp(data_width).asInstanceOf[this.type] }
 }
 

@@ -119,6 +119,7 @@ class FrontEnd(implicit conf: SodorConfiguration) extends Module
    io.imem.req.valid     := fetch && io.imem.req.ready && io.cpu.resp.ready && !reset && !io.cpu.req.valid
    io.imem.req.bits.fcn  := M_XRD
    io.imem.req.bits.typ  := MT_WU
+   io.imem.req.bits.excl := Bool(false)
 
    //**********************************
    // Inst Fetch/Return Stage
