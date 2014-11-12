@@ -29,6 +29,7 @@ class ShmacUnit extends Module
 
   core.io.imem <> arbiter.io.imem
   core.io.dmem <> arbiter.io.dmem
+//  arbiter.io.dmem.resp.ready := core.io.dmem.resp.ready
   arbiter.io.mem <> io.mem
 
   core.io.host <> io.host
