@@ -26,14 +26,22 @@ class ShmacUnitTest(t: ShmacUnit) extends Tester(t) {
   }
 
   def peekArbiter(): Unit = {
-    peek(t.arbiter.io.imem)
+    peek(t.arbiter.io.imem.req.ready)
+    peek(t.arbiter.io.imem.req.valid)
+    peek(t.arbiter.io.imem.req.bits.addr )
+//    peek(t.arbiter.io.imem.req.bits.data )
+    peek(t.arbiter.io.imem.req.bits.fcn )
+    peek(t.arbiter.io.imem.req.bits.typ )
+    peek(t.arbiter.io.imem.resp.ready)
+    peek(t.arbiter.io.imem.resp.valid)
+    peek(t.arbiter.io.imem.resp.bits.data)
     peek(t.arbiter.io.dmem.req.ready)
     peek(t.arbiter.io.dmem.req.valid)
     peek(t.arbiter.io.dmem.req.bits.addr )
     peek(t.arbiter.io.dmem.req.bits.data )
     peek(t.arbiter.io.dmem.req.bits.fcn )
     peek(t.arbiter.io.dmem.req.bits.typ )
-    peek(t.arbiter.io.dmem.resp.ready)
+//    peek(t.arbiter.io.dmem.resp.ready)
     peek(t.arbiter.io.dmem.resp.valid)
     peek(t.arbiter.io.dmem.resp.bits.data)
     peek(t.arbiter.io.mem)
@@ -58,60 +66,53 @@ class ShmacUnitTest(t: ShmacUnit) extends Tester(t) {
   expect(t.io.mem.req.valid, 1) // Gets valid after req.ready is set
   expect(t.io.mem.req.bits.addr, 0x2000)
   // Serve the first instruction
+  expect(t.core.io.imem.resp.ready, 1) // Core ready to receive imem request
   expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, 0x6f) //Branch to self
-  poke(t.io.mem.resp.bits.addr, 0x2000)
+  poke(t.io.mem.resp.valid, 0)
+  // poke(t.io.mem.resp.bits.data, 0x6f) //Branch to self
+
   // Verify that there is no dmem request
-  expect(t.core.io.imem.req.ready, 1) // Core ready to receive imem request
-  expect(t.core.io.dmem.req.ready, 1) // Core ready to receive dmem request
+  expect(t.core.io.dmem.resp.ready, 0) // Core ready to receive dmem request
   expect(t.core.io.dmem.req.valid, 0) // Not requesting data
   expect(t.core.io.dmem.req.bits.addr, 0)
   expect(t.core.io.dmem.req.bits.data, 0)
   peekArbiter()
-  step(1)
-
-//  poke(t.io.mem.req.ready, 0)
-  expect(t.io.mem.req.valid, 0) // Gets valid after req.ready is set
-  expect(t.io.mem.req.bits.addr, 0x2004) // PC is increased
-  // Serve the first instruction
-  expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
-//  poke(t.io.mem.resp.valid, 0)
-  expect(t.io.mem.resp.bits.data, 0x6f) //Branch to self
-  poke(t.io.mem.resp.bits.addr, 0x2004)
-
-  peekArbiter()
-  step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
 
   step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
 
-//  peek(t.core.io.dmem.resp.valid)
-////  peek(t.core.io.dmem.resp.bits.addr) Not used
-//  peek(t.core.io.dmem.resp.bits.data)
+  // Waiting for instruction
+  expect(t.core.io.imem.resp.ready, 1)
+  expect(t.io.mem.resp.ready, 1)
+  expect(t.io.mem.req.valid, 1)
+  expect(t.io.mem.req.bits.addr, 0x2000)
+  // Write instruction
+  poke(t.io.mem.resp.valid, 1)
+  poke(t.io.mem.resp.bits.data, 0x6f) //Branch to self
+
+  peekArbiter()
+//  step(1)
 //
-//  // The processor should request the next instruction
-//  poke(t.io.mem.req.ready, 1)
-//  expect(t.io.mem.req.valid, 1) // Gets valid after it req.ready is set
-//  expect(t.io.mem.req.bits.addr, 0x2004)
+////  poke(t.io.mem.req.ready, 0)
+//  expect(t.io.mem.req.valid, 0) // Gets valid after req.ready is set
+//  expect(t.io.mem.req.bits.addr, 0x2004) // PC is increased
 //  // Serve the first instruction
-//  expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2004
-//  expect(t.io.mem.resp.valid, 1)
-//  expect(t.io.mem.resp.bits.data, 0x6f) //Same as last
+//  expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
+////  poke(t.io.mem.resp.valid, 0)
+//  expect(t.io.mem.resp.bits.data, 0x6f) //Branch to self
+//  poke(t.io.mem.resp.bits.addr, 0x2004)
 //
-//  // Verify that there is no dmem request
-//  expect(t.core.io.dmem.req.ready, 1) // Ready to receive dmem request
-//  expect(t.core.io.dmem.req.valid, 0) // Not requesting data
-//  expect(t.core.io.dmem.req.bits.addr, 0)
-//  expect(t.core.io.dmem.req.bits.data, 0)
+//  peekArbiter()
+  step(1)
+  peekArbiter()
+  step(1)
+  peekArbiter()
 
+  step(1)
+  peekArbiter()
+  step(1)
+  peekArbiter()
+  step(1)
+  peekArbiter()
   step(1)
   peekArbiter()
 
