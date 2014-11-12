@@ -17,31 +17,26 @@ class ShmacUnitTest(t: ShmacUnit) extends Tester(t) {
     }
   }
 
-  def checkSodorMemoryRequests(isReady: BigInt = 1): Unit = {
-    peek(t.io.mem)
-    peek(t.arbiter.io.mem)
-    expect(t.core.io.imem.resp.ready, isReady) // Ready to receive next instruction
-    expect(t.arbiter.io.mem.resp.ready, isReady) // Expecting the above signal go through to this
-    expect(t.io.mem.resp.ready, isReady)
-  }
-
   def peekArbiter(): Unit = {
+    println("#-----")
+    println("# Printing arbiter signals")
+    println("#-----")
     peek(t.arbiter.io.imem.req.ready)
     peek(t.arbiter.io.imem.req.valid)
-    peek(t.arbiter.io.imem.req.bits.addr )
-//    peek(t.arbiter.io.imem.req.bits.data )
-    peek(t.arbiter.io.imem.req.bits.fcn )
-    peek(t.arbiter.io.imem.req.bits.typ )
+    peek(t.arbiter.io.imem.req.bits.addr)
+    //    peek(t.arbiter.io.imem.req.bits.data )
+    peek(t.arbiter.io.imem.req.bits.fcn)
+    peek(t.arbiter.io.imem.req.bits.typ)
     peek(t.arbiter.io.imem.resp.ready)
     peek(t.arbiter.io.imem.resp.valid)
     peek(t.arbiter.io.imem.resp.bits.data)
     peek(t.arbiter.io.dmem.req.ready)
     peek(t.arbiter.io.dmem.req.valid)
-    peek(t.arbiter.io.dmem.req.bits.addr )
-    peek(t.arbiter.io.dmem.req.bits.data )
-    peek(t.arbiter.io.dmem.req.bits.fcn )
-    peek(t.arbiter.io.dmem.req.bits.typ )
-//    peek(t.arbiter.io.dmem.resp.ready)
+    peek(t.arbiter.io.dmem.req.bits.addr)
+    peek(t.arbiter.io.dmem.req.bits.data)
+    peek(t.arbiter.io.dmem.req.bits.fcn)
+    peek(t.arbiter.io.dmem.req.bits.typ)
+    //    peek(t.arbiter.io.dmem.resp.ready)
     peek(t.arbiter.io.dmem.resp.valid)
     peek(t.arbiter.io.dmem.resp.bits.data)
     peek(t.arbiter.io.mem)
@@ -58,18 +53,19 @@ class ShmacUnitTest(t: ShmacUnit) extends Tester(t) {
 
   step(1)
   checkCoreOutputs()
-  poke(t.io.host.reset, 0)
   step(1)
+  val imem_req_addr = 0x2000
+  poke(t.io.host.reset, 0)
 
   // The processor should request the first instruction
   poke(t.io.mem.req.ready, 1)
   expect(t.io.mem.req.valid, 1) // Gets valid after req.ready is set
-  expect(t.io.mem.req.bits.addr, 0x2000)
+  expect(t.io.mem.req.bits.addr, imem_req_addr)
   // Serve the first instruction
   expect(t.core.io.imem.resp.ready, 1) // Core ready to receive imem request
   expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
-  poke(t.io.mem.resp.valid, 0)
-  // poke(t.io.mem.resp.bits.data, 0x6f) //Branch to self
+  poke(t.io.mem.resp.valid, 1) // Resp must be ready if req.ready is set
+  //  poke(t.io.mem.resp.bits.data, 0x2000<<12 | 0x6f) //Branch to self
 
   // Verify that there is no dmem request
   expect(t.core.io.dmem.resp.ready, 0) // Core ready to receive dmem request
@@ -80,42 +76,32 @@ class ShmacUnitTest(t: ShmacUnit) extends Tester(t) {
 
   step(1)
 
-  // Waiting for instruction
-  expect(t.core.io.imem.resp.ready, 1)
-  expect(t.io.mem.resp.ready, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0x2000)
-  // Write instruction
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, 0x6f) //Branch to self
+  // Verify that the PC is automaticallt increased
+  for (i <- 1 to 10) {
+    val next_pc = imem_req_addr + i * 4
 
-  peekArbiter()
-//  step(1)
-//
-////  poke(t.io.mem.req.ready, 0)
-//  expect(t.io.mem.req.valid, 0) // Gets valid after req.ready is set
-//  expect(t.io.mem.req.bits.addr, 0x2004) // PC is increased
-//  // Serve the first instruction
-//  expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
-////  poke(t.io.mem.resp.valid, 0)
-//  expect(t.io.mem.resp.bits.data, 0x6f) //Branch to self
-//  poke(t.io.mem.resp.bits.addr, 0x2004)
-//
-//  peekArbiter()
-  step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
+    // Not requesting
+    expect(t.core.io.imem.req.valid, 0)
+    expect(t.io.mem.req.valid, 0)
+    expect(t.io.mem.req.bits.addr, next_pc) // PC is increased
+    expect(t.io.mem.resp.ready, 1)
 
-  step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
-  step(1)
-  peekArbiter()
+    peekArbiter()
+    step(1)
 
+    // Requesting next instruction
+    expect(t.core.io.imem.req.valid, 1)
+    expect(t.io.mem.req.valid, 1)
+    expect(t.io.mem.req.bits.addr, next_pc) // PC not increased
+    expect(t.io.mem.resp.ready, 1)
+
+    peekArbiter()
+    step(1)
+  }
+
+  poke(t.io.host.reset, 1)
   step(1)
-  peekArbiter()
+  poke(t.io.host.reset, 0)
+  expect(t.io.mem.req.bits.addr, imem_req_addr)
+
 }
