@@ -3,7 +3,7 @@ package test
 import Chisel._
 import Sodor.ShmacUnit
 
-class ShmacDmemReqTest(t: ShmacUnit) extends Tester(t) {
+class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
 
   def peekArbiter(): Unit = {
     println("#-----")
@@ -75,6 +75,7 @@ class ShmacDmemReqTest(t: ShmacUnit) extends Tester(t) {
   // Core is not ready to receive data before resp is valid
   poke(t.io.mem.resp.valid, 1)
   poke(t.io.mem.resp.bits.data, 0xa)
+//  poke(t.io.mem.resp.bits.addr, 0xa)
   expect(t.io.mem.resp.ready, 1)
   expect(t.core.io.dmem.resp.ready, 0) // This signal does not get set
 
@@ -131,6 +132,7 @@ class ShmacDmemReqTest(t: ShmacUnit) extends Tester(t) {
 // Core is not ready to receive data before resp is valid
   poke(t.io.mem.resp.valid, 1)
   poke(t.io.mem.resp.bits.data, 0xb)
+//  poke(t.io.mem.resp.bits.addr, 0xb)
   expect(t.io.mem.resp.ready, 1)
   expect(t.core.io.dmem.resp.ready, 0) // This signal does not get set
 
@@ -212,14 +214,24 @@ class ShmacDmemReqTest(t: ShmacUnit) extends Tester(t) {
   expect(t.io.mem.req.valid, 1)
   expect(t.io.mem.req.bits.addr, 0xc) // SW-address
   peek(t.io.mem.req.bits.data)
+  expect(t.io.mem.req.bits.fcn, 1) // This is a store request
+  expect(t.io.mem.req.bits.typ, 3) // Write word
 
   // Stop sending instructions
   poke(t.io.mem.resp.valid, 1)
   poke(t.io.mem.resp.bits.data, 0)
   expect(t.io.mem.resp.ready, 1)
 
+  peek(t.io.host)
   peekArbiter()
   step(1) // Cycle 10
 
+  expect(t.core.io.imem.req.valid, 1)
+  expect(t.io.mem.resp.ready ,1)
+  poke(t.io.mem.resp.valid, 1)
+//  poke(t.io.mem.resp.bits.data, 0x4033) // Bubble op
+
   peekArbiter()
+  step(1)
+
 }

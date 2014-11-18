@@ -70,7 +70,7 @@ object TestMain {
    case "ShmacUnit" => chiselMainTest(args, () => Module(new ShmacUnit())) {
      t => {
        new ShmacUnitTest(t)
-       new ShmacDmemReqTest(t)
+       new ShmacLoadStoreTest(t)
      }
    }
    case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {

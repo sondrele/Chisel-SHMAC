@@ -53,11 +53,4 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   poke(sodor.mem.resp.valid, 1)
   poke(sodor.mem.resp.bits.data, 0x6f) //Branch to self
 
-  peek(t.unit.core.io.imem)
-
-  step(1)
-  peek(t.unit.core.io.imem)
-
-  step(1)
-  peek(t.unit.core.io.imem)
 }
