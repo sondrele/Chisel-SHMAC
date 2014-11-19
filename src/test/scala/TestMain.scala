@@ -66,17 +66,17 @@ object TestMain {
        new RamTileSumTest(t)
      }
    }
-   case "ShmacUnit" => chiselMainTest(args, () => Module(new ShmacUnit())) {
-     t => {
-       new ShmacUnitTest(t)
-       new ShmacLoadStoreTest(t)
-       new ShmacStoreImmediateTest(t)
+   case "ShmacUnit" =>
+     chiselMainTest(args, () => Module(new ShmacUnit())) {
+       t => new ShmacUnitTest(t)
      }
-   }
-//   case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
-//     t => new SodorTileTest(t)
-//   }
-   case other => sys.error(s"No module with name $other")
+     chiselMainTest(args, () => Module(new ShmacUnit())) {
+       t => new ShmacLoadStoreTest(t)
+     }
+     chiselMainTest(args, () => Module(new ShmacUnit())) {
+       t => new ShmacStoreImmediateTest(t)
+     }
+    case other => sys.error(s"No module with name $other")
   }
 
 }
