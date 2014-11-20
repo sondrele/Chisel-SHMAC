@@ -4,53 +4,62 @@ import Chisel._
 import tiles._
 
 class SodorTileTest(t: SodorTile) extends Tester(t) {
-  import t.unit.{io => sodor}
-  import t.io.host
+  import t.unit
 
-  def checkCoreOutputs(mem_req_addr: Option[Int] = None,
-                       host_ipi_req_valid: Int = 0,
-                       host_csr_rep_valid: Int = 0) {
-
-    mem_req_addr match {
-      case Some(addr) =>
-        expect(t.unit.io.mem.req.valid, 1)
-        expect(sodor.mem.req.bits.addr, addr)
-      case None =>
-        expect(sodor.mem.req.valid, 0)
-    }
-
-    expect(sodor.host.ipi_req.valid, host_ipi_req_valid)
-    expect(sodor.host.csr_rep.valid, host_csr_rep_valid)
+  def checkImemRequest(addr: BigInt): Unit = {
+    expect(unit.io.mem.req.valid, 1) // Gets valid after req.ready is set
+    expect(unit.io.mem.req.bits.fcn, 0)
+    expect(unit.io.mem.req.bits.typ, 7)
+    expect(unit.io.mem.req.bits.addr, addr)
+    expect(unit.io.mem.resp.ready, 1)
+    // Verify that the same signals is set for imem
+    expect(unit.core.io.imem.req.valid, 1)
+    expect(unit.core.io.imem.resp.ready, 1)
+    expect(unit.core.io.imem.req.bits.fcn, 0)
+    expect(unit.core.io.imem.req.bits.typ, 7)
+    expect(unit.core.io.imem.req.bits.addr, addr)
+    // Verify that there is no dmem request
+    expect(unit.core.io.dmem.resp.ready, 0)
   }
 
-  def checkSodorMemoryRequests(): Unit = {
-    expect(t.unit.core.io.imem.resp.ready, 1) // Ready to receive next instruction
-    expect(t.unit.arbiter.io.mem.resp.ready, 1) // Expecting the above signal go through to this
-    peek(sodor.mem)
-    peek(t.unit.arbiter.io.mem)
-    expect(t.unit.io.mem.resp.ready, 1)
-    expect(t.localPort.out.ready, 1)
+  def peekArbiter(): Unit = {
+    println("#-----")
+    println("# Printing arbiter signals")
+    peek(unit.arbiter.io.mem)
+    peek(unit.arbiter.io.imem.req.ready)
+    peek(unit.arbiter.io.imem.req.valid)
+    peek(unit.arbiter.io.imem.req.bits.addr)
+    peek(unit.arbiter.io.imem.req.bits.fcn)
+    peek(unit.arbiter.io.imem.req.bits.typ)
+    peek(unit.arbiter.io.imem.resp.ready)
+    peek(unit.arbiter.io.imem.resp.valid)
+    peek(unit.arbiter.io.imem.resp.bits.data)
+    peek(unit.arbiter.io.dmem.req.ready)
+    peek(unit.arbiter.io.dmem.req.valid)
+    peek(unit.arbiter.io.dmem.req.bits.addr)
+    peek(unit.arbiter.io.dmem.req.bits.data)
+    peek(unit.arbiter.io.dmem.req.bits.fcn)
+    peek(unit.arbiter.io.dmem.req.bits.typ)
+    peek(unit.core.io.dmem.resp.ready)
+    peek(unit.arbiter.io.dmem.resp.valid)
+    peek(unit.arbiter.io.dmem.resp.bits.data)
+    println("#-----")
   }
 
-  poke(host.reset, 1)
-  poke(sodor.mem.req.ready, 0)
-  poke(sodor.host.csr_req.valid, 0)
-  poke(sodor.host.ipi_rep.valid, 0)
+  // I-type      Width         rd            LUI
+  val ld_a    = (0x1 << 12) | (0x1 << 7)  | 0x37 // 0x2000
+  // S-type     rs2           Base          Function      Addr        SW
+  val sw_a   = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xa << 7) | 0x23 // 0x2004
+  val ld_b    = (0x2 << 12) | (0x1 << 7)  | 0x37 // 0x2008
+  val sw_b   = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xb << 7) | 0x23 // 0x200c
 
-  //Check stable reset behaviour
-  for (i <- 1 to 10) {
-    step(1)
-    checkCoreOutputs()
-  }
+  poke(t.io.host.reset, 1)
+  poke(t.io.reqReady, 0)
 
-  checkSodorMemoryRequests()
-  step(1)
-  checkSodorMemoryRequests()
-  step(1)
-  poke(host.reset, 0)
-//  poke(t.unit.io.mem.req.ready, 1)
-  expect(sodor.mem.resp.ready, 1)
-  poke(sodor.mem.resp.valid, 1)
-  poke(sodor.mem.resp.bits.data, 0x6f) //Branch to self
+  step(1) // 1
 
+  poke(t.io.host.reset, 0)
+
+  poke(t.io.reqReady, 1)
+  checkImemRequest(0x2000)
 }

@@ -1,13 +1,14 @@
 package tiles
 
 import Chisel._
-import Common.{HTIFIO, SodorConfiguration}
+import Common.{MemPortIo, HTIFIO, SodorConfiguration}
 import router._
 import Sodor._
 
 class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
   implicit val sodorConf = SodorConfiguration()
   val host = new HTIFIO()
+  val reqReady = Bool(INPUT)
 }
 
 class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
@@ -40,7 +41,7 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   outPacket.header.writeReq := Bool(true)
   outPacket.header.address := unit.io.mem.req.bits.addr
 
-  unit.io.mem.req.ready := localPort.in.ready
+  unit.io.mem.req.ready := localPort.in.ready && io.reqReady
   localPort.in.valid := unit.io.mem.req.valid
   localPort.in.bits.assign(outPacket)
 }

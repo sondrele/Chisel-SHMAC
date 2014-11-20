@@ -19,7 +19,8 @@ object TestMain {
       "Router",
       "Ram",
       "RamTile",
-      "ShmacUnit"
+      "ShmacUnit",
+      "SodorTile"
     )
 
     args(0) match {
@@ -82,6 +83,10 @@ object TestMain {
       }
       chiselMainTest(args, () => Module(new ShmacUnit())) {
         t => new ShmacLoadAddStoreTest(t)
+      }
+    case "SodorTile" =>
+      chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
+        t => new SodorTileTest(t)
       }
     case other => sys.error(s"No module with name $other")
   }
