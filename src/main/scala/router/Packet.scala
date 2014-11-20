@@ -13,13 +13,13 @@ class PacketHeader extends Bundle {
   val writeMask = Bits(width = 16)
   val writeReq = Bool()
   val reply = Bool()
-  val address = Bits(width = 32)
+  val address = Bits(width = Packet.ADDRESS_WIDTH)
 }
 
 class Packet extends Bundle {
   val dest = new PacketDir()
   val sender = new PacketDir()
-  val payload = Bits(width = 128)
+  val payload = Bits(width = Packet.DATA_WIDTH)
   val header = new PacketHeader()
 
   def assign(other: Packet): Unit = {
@@ -52,17 +52,17 @@ class Packet extends Bundle {
 }
 
 object Packet {
-  val LENGTH              = 196
+  val LENGTH = 100
 
-  val Y_DEST_END          = 195
-  val Y_DEST_BEGIN        = 192
-  val X_DEST_END          = 191
-  val X_DEST_BEGIN        = 188
-  val Y_SEND_END          = 187
-  val Y_SEND_BEGIN        = 184
-  val X_SEND_END          = 183
-  val X_SEND_BEGIN        = 180
-  val DATA_END            = 179
+  val Y_DEST_END          = 99
+  val Y_DEST_BEGIN        = 96
+  val X_DEST_END          = 95
+  val X_DEST_BEGIN        = 92
+  val Y_SEND_END          = 91
+  val Y_SEND_BEGIN        = 88
+  val X_SEND_END          = 87
+  val X_SEND_BEGIN        = 84
+  val DATA_END            = 83
   val DATA_BEGIN          = 52
   val ERROR_INDEX         = 51
   val EXOP_INDEX          = 50
@@ -72,4 +72,7 @@ object Packet {
   val REPLY_INDEX         = 32
   val ADDRESS_END         = 31
   val ADDRESS_BEGIN       = 0
+
+  val DATA_WIDTH = DATA_END - DATA_BEGIN + 1
+  val ADDRESS_WIDTH  = ADDRESS_END - ADDRESS_BEGIN + 1
 }

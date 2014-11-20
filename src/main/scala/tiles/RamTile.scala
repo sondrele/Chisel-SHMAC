@@ -20,7 +20,7 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) ext
   val isWrite = packet.header.writeReq
   val isRead = !isWrite
 
-  val ram = Module(new Ram(depth = memDepth, dataWidth = 128)).io
+  val ram = Module(new Ram(depth = memDepth, dataWidth = Packet.DATA_WIDTH)).io
 
   ram.reads.valid := localPort.out.valid && isRead
   ram.reads.bits.address := address
