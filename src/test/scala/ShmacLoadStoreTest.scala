@@ -34,15 +34,10 @@ class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
   poke(t.io.mem.req.ready, 0)
 
   step(1) // 1
-  // I-type      Width         rd            LUI
-  val ld_a     = (0x1 << 12) | (0x1 << 7)  | 0x37
-  //              rs2           Base          Function      Addr       SW
-  val sw_a     = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xc << 7) | 0x23
-
-  //             Address        Width         rd            LD
-  val ld_b     = (0x0 << 20) | (0x2 << 12) | (0x2 << 7)  | 0x03
+  // I-type      Address       Width         rd            LD
+  val ld_a     = (0xa << 20) | (0x2 << 12) | (0x2 << 7)  | 0x03
   // S-type      rs2           Base          Function      Addr        SW
-  val sw_b     = (0x2 << 20) | (0x0 << 15) | (0x2 << 12) | (0xd << 7) | 0x23
+  val sw_a     = (0x2 << 20) | (0x0 << 15) | (0x2 << 12) | (0xd << 7) | 0x23
 
   poke(t.io.host.reset, 0)
 
@@ -66,17 +61,37 @@ class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
 
   step(1) // 2
 
-  expect(t.io.mem.req.valid, 0)
-  poke(t.io.mem.req.ready, 0)
+  poke(t.io.mem.req.ready, 1)
+  expect(t.io.mem.req.valid, 1)
+  expect(t.io.mem.req.bits.fcn, 0) // Load
+  expect(t.io.mem.req.bits.typ, 3) // Imem?
+  expect(t.io.mem.req.bits.addr, 0xa)
+  //  expect(t.io.mem.req.bits.data, 0)
+  poke(t.io.mem.resp.valid, 1)
+  poke(t.io.mem.resp.bits.data, 0xb)
+  expect(t.io.mem.resp.ready, 1)
+
+  // Check imem
+  expect(t.core.io.imem.req.valid, 0)
+  expect(t.core.io.imem.req.ready, 0)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 1)
+  expect(t.core.io.dmem.req.ready, 1)
 
   step(1) // 3
+
+  poke(t.io.mem.req.ready, 0)
+  expect(t.io.mem.req.valid, 0)
+  peekArbiter()
+
+  step(1) // 4
 
   poke(t.io.mem.req.ready, 1)
   expect(t.io.mem.req.valid, 1)
   expect(t.io.mem.req.bits.fcn, 0) // Load
   expect(t.io.mem.req.bits.typ, 7) // Imem?
   expect(t.io.mem.req.bits.addr, 0x2004)
-  //  expect(t.io.mem.req.bits.data, 0)
+//  poke(t.io.mem.req.bits.data, 0)
   poke(t.io.mem.resp.valid, 1)
   poke(t.io.mem.resp.bits.data, sw_a)
   expect(t.io.mem.resp.ready, 1)
@@ -88,97 +103,21 @@ class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
   expect(t.core.io.dmem.req.valid, 0)
   expect(t.core.io.dmem.req.ready, 1)
 
-  step(1) // 4
-
-  poke(t.io.mem.req.ready, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.fcn, 1) // Store
-  expect(t.io.mem.req.bits.typ, 3) // Dmem?
-  expect(t.io.mem.req.bits.addr, 0xc)
-  expect(t.io.mem.req.bits.data, 0x1000)
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, 0)
-  expect(t.io.mem.resp.ready, 1)
-
-  // Check imem
-  expect(t.core.io.imem.req.valid, 0)
-  expect(t.core.io.imem.req.ready, 0)
-  // Check dmem
-  expect(t.core.io.dmem.req.valid, 1)
-  expect(t.core.io.dmem.req.ready, 1)
-
+  peekArbiter()
   step(1) // 5
+  peekArbiter()
 
-  poke(t.io.mem.req.ready, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.fcn, 0)
-  expect(t.io.mem.req.bits.typ, 7)
-  expect(t.io.mem.req.bits.addr, 0x2008)
-//  expect(t.io.mem.req.bits.data, 0x1000)
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, ld_b)
-  expect(t.io.mem.resp.ready, 1)
-
-  // Check imem
-  expect(t.core.io.imem.req.valid, 1)
-  expect(t.core.io.imem.req.ready, 1)
-  // Check dmem
-  expect(t.core.io.dmem.req.valid, 0)
-  expect(t.core.io.dmem.req.ready, 1)
+  poke(t.io.mem.req.ready, 0)
+  expect(t.io.mem.req.valid, 0)
 
   step(1) // 6
 
-  expect(t.io.mem.req.valid, 0)
-  poke(t.io.mem.req.ready, 0)
-
-  step(1) // 7
-
   poke(t.io.mem.req.ready, 1)
   expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.fcn, 0) // Load
-  expect(t.io.mem.req.bits.typ, 3) // Dmem? Valid?
-  expect(t.io.mem.req.bits.addr, 0x0)
-  expect(t.io.mem.req.bits.data, 0)
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, 0xa)
-//  poke(t.io.mem.resp.bits.addr, 0xa)
-  expect(t.io.mem.resp.ready, 1)
-
-  // Check imem
-  expect(t.core.io.imem.req.valid, 0)
-  expect(t.core.io.imem.req.ready, 0)
-  // Check dmem
-  expect(t.core.io.dmem.req.valid, 1)
-  expect(t.core.io.dmem.req.ready, 1)
-
-  peekArbiter()
-  step(1) // 8
-
-  poke(t.io.mem.req.ready, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.fcn, 0)
-  expect(t.io.mem.req.bits.typ, 7)
-  expect(t.io.mem.req.bits.addr, 0x200c)
-  expect(t.io.mem.req.bits.data, 0)
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, sw_b)
-  expect(t.io.mem.resp.ready, 1)
-
-  // Check imem
-  expect(t.core.io.imem.req.valid, 1)
-  expect(t.core.io.imem.req.ready, 1)
-  // Check dmem
-  expect(t.core.io.dmem.req.valid, 0)
-  expect(t.core.io.dmem.req.ready, 1)
-
-  step(1) // 9
-
-  poke(t.io.mem.req.ready, 1)
-  expect(t.io.mem.req.valid, 1) // <- bug? Dmem is requesting..
   expect(t.io.mem.req.bits.fcn, 1) // Store
   expect(t.io.mem.req.bits.typ, 3) // Dmem?
   expect(t.io.mem.req.bits.addr, 0xd)
-  expect(t.io.mem.req.bits.data, 0xa)
+  expect(t.io.mem.req.bits.data, 0xb)
   poke(t.io.mem.resp.valid, 1)
   poke(t.io.mem.resp.bits.data, 0)
   expect(t.io.mem.resp.ready, 1)
@@ -189,26 +128,9 @@ class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
   // Check dmem
   expect(t.core.io.dmem.req.valid, 1)
   expect(t.core.io.dmem.req.ready, 1)
+  expect(t.core.io.dmem.req.bits.fcn, 1) // Store
+  expect(t.core.io.dmem.req.bits.typ, 3) // Dmem?
+  expect(t.core.io.dmem.req.bits.addr, 0xd)
+  expect(t.core.io.dmem.req.bits.data, 0xb)
 
-  peekArbiter()
-  step(1) // 10
-
-  poke(t.io.mem.req.ready, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.fcn, 0)
-  expect(t.io.mem.req.bits.typ, 7)
-  expect(t.io.mem.req.bits.addr, 0x2010)
-  //  expect(t.io.mem.req.bits.data, 0x1000)
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, sw_a) // Start over...
-  expect(t.io.mem.resp.ready, 1)
-
-  // Check imem
-  expect(t.core.io.imem.req.valid, 1)
-  expect(t.core.io.imem.req.ready, 1)
-  // Check dmem
-  expect(t.core.io.dmem.req.valid, 0)
-  expect(t.core.io.dmem.req.ready, 1)
-
-  peekArbiter()
 }
