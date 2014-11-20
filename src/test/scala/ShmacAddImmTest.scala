@@ -37,14 +37,18 @@ class ShmacAddImmTest(t: ShmacUnit) extends Tester(t) {
   // I-type      Width         rd            LUI
   val ld_a    = (0x1 << 12) | (0x1 << 7)  | 0x37 // 0x2000
   val ld_b    = (0x2 << 12) | (0x2 << 7)  | 0x37 // 0x2004
+  // R-type     Function       rs2           rs1           rd            ADD
+  val add_ab  = (0x0 << 25)   | (0x2 << 20) | (0x1 << 15) | (0x3 << 7)  | 0x33 // 0x2008
+  // S-type     rs2           Base          Function      Addr        SW
+  val sw_ab   = (0x3 << 20) | (0x0 << 15) | (0x2 << 12) | (0x10 << 7) | 0x23 // 0x200c
+
+  // I-type      Width         rd            LUI
   val ld_c    = (0x3 << 12) | (0x3 << 7)  | 0x37 // 0x2010
   val ld_d    = (0x4 << 12) | (0x4 << 7)  | 0x37 // 0x2014
   // R-type     Function       rs2           rs1           rd            ADD
-  val add_ab  = (0x0 << 25)   | (0x2 << 20) | (0x1 << 15) | (0x3 << 7)  | 0x33 // 0x2008
   val add_cd  = (0x0 << 25)   | (0x4 << 20) | (0x3 << 15) | (0x5 << 7)  | 0x33 // 0x2018
   // S-type     rs2           Base          Function      Addr        SW
-  val sw_ab  = (0x3 << 20) | (0x0 << 15) | (0x2 << 12) | (0x10 << 7) | 0x23 // 0x200c
-  val sw_cd  = (0x3 << 20) | (0x0 << 15) | (0x2 << 12) | (0x14 << 7) | 0x23 // 0x201c
+  val sw_cd   = (0x3 << 20) | (0x0 << 15) | (0x2 << 12) | (0x14 << 7) | 0x23 // 0x201c
 
   poke(t.io.host.reset, 0)
 
@@ -72,7 +76,6 @@ class ShmacAddImmTest(t: ShmacUnit) extends Tester(t) {
 
   expect(t.io.mem.req.valid, 0)
   poke(t.io.mem.req.ready, 0)
-  peekArbiter()
 
   step(1) // Cycle 3
 
@@ -100,7 +103,6 @@ class ShmacAddImmTest(t: ShmacUnit) extends Tester(t) {
 
   expect(t.io.mem.req.valid, 0)
   poke(t.io.mem.req.ready, 0)
-  peekArbiter()
 
   step(1) // Cycle 5
 
@@ -127,7 +129,6 @@ class ShmacAddImmTest(t: ShmacUnit) extends Tester(t) {
 
   expect(t.io.mem.req.valid, 0)
   poke(t.io.mem.req.ready, 0)
-  peekArbiter()
 
   step(1) // Cycle 7
 

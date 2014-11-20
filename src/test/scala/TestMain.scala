@@ -74,9 +74,9 @@ object TestMain {
       chiselMainTest(args, () => Module(new ShmacUnit())) {
         t => new ShmacAddImmTest(t)
       }
-//      chiselMainTest(args, () => Module(new ShmacUnit())) {
-//        t => new ShmacLoadStoreTest(t)
-//      }
+      chiselMainTest(args, () => Module(new ShmacUnit())) {
+        t => new ShmacLoadStoreTest(t)
+      }
     case other => sys.error(s"No module with name $other")
   }
 

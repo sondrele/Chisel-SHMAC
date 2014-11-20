@@ -8,7 +8,7 @@ class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
   def peekArbiter(): Unit = {
     println("#-----")
     println("# Printing arbiter signals")
-    println("#-----")
+    peek(t.arbiter.io.mem)
     peek(t.arbiter.io.imem.req.ready)
     peek(t.arbiter.io.imem.req.valid)
     peek(t.arbiter.io.imem.req.bits.addr)
@@ -24,214 +24,191 @@ class ShmacLoadStoreTest(t: ShmacUnit) extends Tester(t) {
     peek(t.arbiter.io.dmem.req.bits.data)
     peek(t.arbiter.io.dmem.req.bits.fcn)
     peek(t.arbiter.io.dmem.req.bits.typ)
-        peek(t.core.io.dmem.resp.ready)
+    peek(t.core.io.dmem.resp.ready)
     peek(t.arbiter.io.dmem.resp.valid)
     peek(t.arbiter.io.dmem.resp.bits.data)
-    peek(t.arbiter.io.mem)
+    println("#-----")
   }
 
   poke(t.io.host.reset, 1)
   poke(t.io.mem.req.ready, 0)
 
-  step(1) // CYCLE 1
-  //             Address        Width         rd            LD
-  val ld_a     = (0x123 << 20) | (0x2 << 12) | (0x1 << 7)  | 0x03               // 0x12302083
-  //             Address        Width         rd            LD
-  val ld_b     = (0x124 << 20) | (0x2 << 12) | (0x2 << 7)  | 0x03               // 0x12402103
-  //             Function       rs2           rs1           rd            ADD
-  val a_plus_b = (0x0 << 25)   | (0x2 << 20) | (0x1 << 15) | (0x3 << 7)  | 0x33 // 0x002081b3
+  step(1) // 1
+  // I-type      Width         rd            LUI
+  val ld_a     = (0x1 << 12) | (0x1 << 7)  | 0x37
   //              rs2           Base          Function      Addr       SW
-  val sw_sum   = (0x3 << 20) | (0x0 << 15) | (0x2 << 12) | (0xc << 7) | 0x23    // 0x00302623
+  val sw_a     = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xc << 7) | 0x23
+
+  //             Address        Width         rd            LD
+  val ld_b     = (0x0 << 20) | (0x2 << 12) | (0x2 << 7)  | 0x03
+  // S-type      rs2           Base          Function      Addr        SW
+  val sw_b     = (0x2 << 20) | (0x0 << 15) | (0x2 << 12) | (0xd << 7) | 0x23
 
   poke(t.io.host.reset, 0)
 
   // The processor should request the first instruction
   poke(t.io.mem.req.ready, 1)
   expect(t.io.mem.req.valid, 1) // Gets valid after req.ready is set
-  expect(t.core.io.imem.req.valid, 1)
+  expect(t.io.mem.req.bits.fcn, 0)
+  expect(t.io.mem.req.bits.typ, 7)
   expect(t.io.mem.req.bits.addr, 0x2000)
-  // Serve the first instruction
-  expect(t.core.io.imem.resp.ready, 1) // Core ready to receive imem request
-  expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
+  expect(t.io.mem.req.bits.data, 0)
   poke(t.io.mem.resp.valid, 1) // Resp must be ready if req.ready is set
-  poke(t.io.mem.resp.bits.data, ld_a) // ld from mem addr 0x123
+  poke(t.io.mem.resp.bits.data, ld_a) // Serve the first instruction
+  expect(t.io.mem.resp.ready, 1) // Waiting for imem response at 0x2000
 
-  // Verify that there is no dmem request
-  expect(t.core.io.dmem.resp.ready, 0) // Core not ready to receive dmem request
-  expect(t.core.io.dmem.req.valid, 0) // Not requesting data
-  expect(t.core.io.dmem.req.bits.addr, 0)
-  expect(t.core.io.dmem.req.bits.data, 0)
-  peekArbiter()
-
-  step(1) // CYCLE 2
-
-  // Not requesting instruction
-  expect(t.core.io.imem.req.valid, 0)
-
-  // Requesting data
-  expect(t.core.io.dmem.req.valid, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0x123) // LD address
-  // Core is not ready to receive data before resp is valid
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, 0xa)
-//  poke(t.io.mem.resp.bits.addr, 0xa)
-  expect(t.io.mem.resp.ready, 1)
-  expect(t.core.io.dmem.resp.ready, 0) // This signal does not get set
-
-  expect(t.core.io.dmem.req.valid, 1) // Requesting data
-  expect(t.core.io.dmem.req.bits.addr, 0x123)
-  expect(t.core.io.dmem.req.bits.data, 0)
-  expect(t.core.io.dmem.resp.bits.data, 0xa)
-
-  peekArbiter()
-  step(1) // CYCLE 3
-
-  // Not requesting data
-  expect(t.core.io.dmem.req.valid, 0)
-
-  // Requesting next instruction
+  // Check imem
   expect(t.core.io.imem.req.valid, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0x2004) // PC not increased
-  expect(t.io.mem.resp.ready, 1)
+  expect(t.core.io.imem.req.ready, 1)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 0)
+  expect(t.core.io.dmem.req.ready, 1)
 
-  // Respond with next instruction
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, ld_b)
-  expect(t.io.mem.resp.ready, 1)
-  expect(t.core.io.imem.resp.ready, 1)
+  step(1) // 2
 
-  // Verify that there is no dmem request
-  expect(t.core.io.dmem.resp.ready, 0) // Core ready to receive dmem request
-  expect(t.core.io.dmem.req.valid, 0) // Not requesting data
-  expect(t.core.io.dmem.req.bits.addr, 0x123)
-  expect(t.core.io.dmem.req.bits.data, 0)
-
-  peekArbiter()
-  step(1) // CYCLE 4
-  // Not requesting instruction
-  expect(t.core.io.imem.req.valid, 0)
   expect(t.io.mem.req.valid, 0)
-  expect(t.io.mem.req.bits.addr, 0x2008)
-  // Not requesting data
-  expect(t.core.io.dmem.req.valid, 0)
-  // TODO: Fix: Valid-signals is true, but the data is not actually true
+  poke(t.io.mem.req.ready, 0)
 
+  step(1) // 3
 
-  peekArbiter()
-  step(1) // Cycle 5
-  // Not requesting instruction
-  expect(t.core.io.imem.req.valid, 0)
-  expect(t.core.io.imem.resp.ready, 0)
-
-  // Requesting data
-  expect(t.core.io.dmem.req.valid, 1)
+  poke(t.io.mem.req.ready, 1)
   expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0x124) // LD address
-// Core is not ready to receive data before resp is valid
+  expect(t.io.mem.req.bits.fcn, 0) // Load
+  expect(t.io.mem.req.bits.typ, 7) // Imem?
+  expect(t.io.mem.req.bits.addr, 0x2004)
+  //  expect(t.io.mem.req.bits.data, 0)
   poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, 0xb)
-//  poke(t.io.mem.resp.bits.addr, 0xb)
+  poke(t.io.mem.resp.bits.data, sw_a)
   expect(t.io.mem.resp.ready, 1)
-  expect(t.core.io.dmem.resp.ready, 0) // This signal does not get set
 
-  expect(t.core.io.dmem.req.valid, 1) // Requesting data
-  expect(t.core.io.dmem.req.bits.addr, 0x124)
-  expect(t.core.io.dmem.req.bits.data, 0)
-  expect(t.core.io.dmem.resp.bits.data, 0xb)
-
-  peekArbiter()
-  step(1) // Cycle 6
-
-  // Requesting next instruction
+  // Check imem
   expect(t.core.io.imem.req.valid, 1)
-  expect(t.core.io.imem.resp.ready, 1)
-
-  // Not requesting data
+  expect(t.core.io.imem.req.ready, 1)
+  // Check dmem
   expect(t.core.io.dmem.req.valid, 0)
+  expect(t.core.io.dmem.req.ready, 1)
+
+  step(1) // 4
+
+  poke(t.io.mem.req.ready, 1)
   expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0x2008) // PC not increased
-  expect(t.io.mem.resp.ready, 1)
-
-  // Respond with next instruction
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, a_plus_b)
-  expect(t.io.mem.resp.ready, 1)
-  expect(t.core.io.imem.resp.ready, 1)
-
-  // Verify that there is no dmem request
-  expect(t.core.io.dmem.resp.ready, 0) // Core ready to receive dmem request
-  expect(t.core.io.dmem.req.valid, 0) // Not requesting data
-  expect(t.core.io.dmem.req.bits.addr, 0x124)
-  expect(t.core.io.dmem.req.bits.data, 0)
-
-  peekArbiter()
-  step(1) // Cycle 7
-
-  // Not requesting instruction
-  expect(t.core.io.imem.req.valid, 0)
-
-  // Not requesting data
-  expect(t.core.io.dmem.req.valid, 0)
-  expect(t.io.mem.req.valid, 0)
-  expect(t.io.mem.req.bits.addr, 0x200c) // Next PC
-
-  peekArbiter()
-  step(1) // Cycle 8
-
-  // Requesting next instruction
-  expect(t.core.io.imem.req.valid, 1)
-  expect(t.core.io.imem.resp.ready, 1)
-
-  // Not requesting data
-  expect(t.core.io.dmem.req.valid, 0)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0x200c) // Next PC
-  expect(t.io.mem.resp.ready, 1)
-
-  // Respond with next instruction
-  poke(t.io.mem.resp.valid, 1)
-  poke(t.io.mem.resp.bits.data, sw_sum)
-  expect(t.io.mem.resp.ready, 1)
-  expect(t.core.io.imem.resp.ready, 1)
-
-  // Verify that there is no dmem request
-  expect(t.core.io.dmem.resp.ready, 0) // Core ready to receive dmem request
-  expect(t.core.io.dmem.req.valid, 0) // Not requesting data
-//  expect(t.core.io.dmem.req.bits.addr, 0) // Is this signal random?
-  expect(t.core.io.dmem.req.bits.data, a_plus_b)
-
-  peekArbiter()
-  step(1) // Cycle 9
-
-  // Not requesting instruction
-  expect(t.core.io.imem.req.valid, 0)
-  expect(t.core.io.imem.resp.ready, 0)
-
-  // requesting data
-  expect(t.core.io.dmem.req.valid, 1)
-  expect(t.io.mem.req.valid, 1)
-  expect(t.io.mem.req.bits.addr, 0xc) // SW-address
-  peek(t.io.mem.req.bits.data)
-  expect(t.io.mem.req.bits.fcn, 1) // This is a store request
-  expect(t.io.mem.req.bits.typ, 3) // Write word
-
-  // Stop sending instructions
+  expect(t.io.mem.req.bits.fcn, 1) // Store
+  expect(t.io.mem.req.bits.typ, 3) // Dmem?
+  expect(t.io.mem.req.bits.addr, 0xc)
+  expect(t.io.mem.req.bits.data, 0x1000)
   poke(t.io.mem.resp.valid, 1)
   poke(t.io.mem.resp.bits.data, 0)
   expect(t.io.mem.resp.ready, 1)
 
-  peek(t.io.host)
-  peekArbiter()
-  step(1) // Cycle 10
+  // Check imem
+  expect(t.core.io.imem.req.valid, 0)
+  expect(t.core.io.imem.req.ready, 0)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 1)
+  expect(t.core.io.dmem.req.ready, 1)
 
-  expect(t.core.io.imem.req.valid, 1)
-  expect(t.io.mem.resp.ready ,1)
+  step(1) // 5
+
+  poke(t.io.mem.req.ready, 1)
+  expect(t.io.mem.req.valid, 1)
+  expect(t.io.mem.req.bits.fcn, 0)
+  expect(t.io.mem.req.bits.typ, 7)
+  expect(t.io.mem.req.bits.addr, 0x2008)
+//  expect(t.io.mem.req.bits.data, 0x1000)
   poke(t.io.mem.resp.valid, 1)
-//  poke(t.io.mem.resp.bits.data, 0x4033) // Bubble op
+  poke(t.io.mem.resp.bits.data, ld_b)
+  expect(t.io.mem.resp.ready, 1)
+
+  // Check imem
+  expect(t.core.io.imem.req.valid, 1)
+  expect(t.core.io.imem.req.ready, 1)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 0)
+  expect(t.core.io.dmem.req.ready, 1)
+
+  step(1) // 6
+
+  expect(t.io.mem.req.valid, 0)
+  poke(t.io.mem.req.ready, 0)
+
+  step(1) // 7
+
+  poke(t.io.mem.req.ready, 1)
+  expect(t.io.mem.req.valid, 1)
+  expect(t.io.mem.req.bits.fcn, 0) // Load
+  expect(t.io.mem.req.bits.typ, 3) // Dmem? Valid?
+  expect(t.io.mem.req.bits.addr, 0x0)
+  expect(t.io.mem.req.bits.data, 0)
+  poke(t.io.mem.resp.valid, 1)
+  poke(t.io.mem.resp.bits.data, 0xa)
+//  poke(t.io.mem.resp.bits.addr, 0xa)
+  expect(t.io.mem.resp.ready, 1)
+
+  // Check imem
+  expect(t.core.io.imem.req.valid, 0)
+  expect(t.core.io.imem.req.ready, 0)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 1)
+  expect(t.core.io.dmem.req.ready, 1)
 
   peekArbiter()
-  step(1)
+  step(1) // 8
 
+  poke(t.io.mem.req.ready, 1)
+  expect(t.io.mem.req.valid, 1)
+  expect(t.io.mem.req.bits.fcn, 0)
+  expect(t.io.mem.req.bits.typ, 7)
+  expect(t.io.mem.req.bits.addr, 0x200c)
+  expect(t.io.mem.req.bits.data, 0)
+  poke(t.io.mem.resp.valid, 1)
+  poke(t.io.mem.resp.bits.data, sw_b)
+  expect(t.io.mem.resp.ready, 1)
+
+  // Check imem
+  expect(t.core.io.imem.req.valid, 1)
+  expect(t.core.io.imem.req.ready, 1)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 0)
+  expect(t.core.io.dmem.req.ready, 1)
+
+  step(1) // 9
+
+  poke(t.io.mem.req.ready, 1)
+  expect(t.io.mem.req.valid, 1) // <- bug? Dmem is requesting..
+  expect(t.io.mem.req.bits.fcn, 1) // Store
+  expect(t.io.mem.req.bits.typ, 3) // Dmem?
+  expect(t.io.mem.req.bits.addr, 0xd)
+  expect(t.io.mem.req.bits.data, 0xa)
+  poke(t.io.mem.resp.valid, 1)
+  poke(t.io.mem.resp.bits.data, 0)
+  expect(t.io.mem.resp.ready, 1)
+
+  // Check imem
+  expect(t.core.io.imem.req.valid, 0)
+  expect(t.core.io.imem.req.ready, 0)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 1)
+  expect(t.core.io.dmem.req.ready, 1)
+
+  peekArbiter()
+  step(1) // 10
+
+  poke(t.io.mem.req.ready, 1)
+  expect(t.io.mem.req.valid, 1)
+  expect(t.io.mem.req.bits.fcn, 0)
+  expect(t.io.mem.req.bits.typ, 7)
+  expect(t.io.mem.req.bits.addr, 0x2010)
+  //  expect(t.io.mem.req.bits.data, 0x1000)
+  poke(t.io.mem.resp.valid, 1)
+  poke(t.io.mem.resp.bits.data, sw_a) // Start over...
+  expect(t.io.mem.resp.ready, 1)
+
+  // Check imem
+  expect(t.core.io.imem.req.valid, 1)
+  expect(t.core.io.imem.req.ready, 1)
+  // Check dmem
+  expect(t.core.io.dmem.req.valid, 0)
+  expect(t.core.io.dmem.req.ready, 1)
+
+  peekArbiter()
 }
