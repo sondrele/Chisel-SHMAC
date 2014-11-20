@@ -71,9 +71,9 @@ object TestMain {
       chiselMainTest(args, () => Module(new ShmacUnit())) {
        t => new ShmacStoreImmediateTest(t)
       }
-//      chiselMainTest(args, () => Module(new ShmacUnit())) {
-//        t => new ShmacAddImmTest(t)
-//      }
+      chiselMainTest(args, () => Module(new ShmacUnit())) {
+        t => new ShmacAddImmTest(t)
+      }
 //      chiselMainTest(args, () => Module(new ShmacUnit())) {
 //        t => new ShmacLoadStoreTest(t)
 //      }
