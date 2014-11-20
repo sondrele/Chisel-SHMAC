@@ -35,8 +35,21 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
   unit.io.mem.resp.bits.data := payload
 
   val outPacket = new Packet()
-  outPacket.sender.y := UInt(y)
-  outPacket.sender.x := UInt(x)
+  outPacket.sender.y := UInt(y, width = 4)
+  outPacket.sender.x := UInt(x, width = 4)
+
+  // The instuction memory is currently hard coded to be at tile (2, 1)
+  when (unit.io.mem.req.valid
+    && unit.io.mem.req.bits.fcn === UInt(0, width = 1)
+    && unit.io.mem.req.bits.typ === UInt(7, width = 3)
+  ) {
+    outPacket.dest.y := UInt(1, width = 4)
+    outPacket.dest.x := UInt(2, width = 4)
+  }.otherwise {
+    outPacket.dest.y := UInt(0, width = 4)
+    outPacket.dest.x := UInt(0, width = 4)
+  }
+
   outPacket.payload := unit.io.mem.req.bits.data
   outPacket.header.writeReq := Bool(true)
   outPacket.header.address := unit.io.mem.req.bits.addr
