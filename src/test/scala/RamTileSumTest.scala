@@ -10,7 +10,6 @@ class RamTileSumTest(t: RamTile) extends Tester(t) {
     peek(t.router)
   }
 
-
   // This tile is at coordinates (x:1, y:1)
   // Poking a bundle can either be done by explicitly poking every field of the bundle
   // or implicitly with an Array. If done implicitly, it is important to notice that

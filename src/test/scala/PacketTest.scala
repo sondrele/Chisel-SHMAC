@@ -10,13 +10,13 @@ class PacketTestModule extends Module {
     val xSender = UInt(OUTPUT, width = 4)
     val yDest = UInt(OUTPUT, width = 4)
     val xDest = UInt(OUTPUT, width = 4)
-    val payload = UInt(OUTPUT, width = 128)
+    val payload = UInt(OUTPUT, width = Packet.DATA_WIDTH)
     val isError = Bool(OUTPUT)
     val isExop = Bool(OUTPUT)
     val writeMask = UInt(OUTPUT, width = 16)
     val isWriteReq = Bool(OUTPUT)
     val isReply = Bool(OUTPUT)
-    val address = UInt(OUTPUT, width = 32)
+    val address = UInt(OUTPUT, width = Packet.ADDRESS_WIDTH)
   }
 
   val data = io.packet.toBits().toUInt()
@@ -51,8 +51,8 @@ class PacketTestModuleTest(m: PacketTestModule) extends Tester(m) {
 
   def testPayload() {
     expect(m.io.payload, 0)
-    poke(m.io.packet.payload, 1)
-    expect(m.io.payload, 1)
+    poke(m.io.packet.payload, (0x1<<31)-1)
+    expect(m.io.payload, Int.MaxValue)
   }
 
   def testError() {
