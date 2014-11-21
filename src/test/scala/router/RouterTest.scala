@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router.{North, East, Router}
 
 class RouterTest(r: Router) extends Tester(r) {
 

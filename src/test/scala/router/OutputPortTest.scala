@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router.OutputPort
 
 class OutputPortTest(p: OutputPort) extends Tester(p) {
   def testFifoIntegration(): Unit = {

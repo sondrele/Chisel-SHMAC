@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router.{North, East, DirectionRouter}
 
 class DirectionRouterTest(a: DirectionRouter) extends Tester(a) {
   // Act like this is input/output from/to North, but packet is going east

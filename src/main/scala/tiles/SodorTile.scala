@@ -1,8 +1,8 @@
-package tiles
+package main.scala.tiles
 
 import Chisel._
-import Common.{MemoryOpConstants, MemPortIo, HTIFIO, SodorConfiguration}
-import router._
+import Common.{MemoryOpConstants, HTIFIO, SodorConfiguration}
+import main.scala.router.{Packet, Router, RouterIO}
 import Sodor._
 
 class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
@@ -68,10 +68,4 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module w
   unit.io.mem.req.ready := localPort.in.ready && io.reqReady
   localPort.in.valid := unit.io.mem.req.valid
   localPort.in.bits.assign(outPacket)
-}
-
-object elaborate {
-  def main(args: Array[String]): Unit = {
-    chiselMain(args, () => Module(new SodorTile(1, 1, 4, 1)))
-  }
 }

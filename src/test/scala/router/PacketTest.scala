@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router.Packet
 
 class PacketTestModule extends Module {
   val io = new Bundle() {

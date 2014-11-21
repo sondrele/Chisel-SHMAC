@@ -1,8 +1,12 @@
 import Chisel._
 import Sodor.ShmacUnit
+import main.scala.memory.Ram
+import main.scala.router._
+import main.scala.tiles.{SodorTile, RamTile}
+import memory.RamTest
 import router._
+import sodor._
 import tiles._
-import test._
 
 object TestMain {
 

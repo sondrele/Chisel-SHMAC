@@ -1,7 +1,7 @@
-package test
+package tiles
 
 import Chisel._
-import tiles._
+import main.scala.tiles.RamTile
 
 class RamTileTest(t: RamTile) extends Tester(t) {
   def peekAtRamTile() {

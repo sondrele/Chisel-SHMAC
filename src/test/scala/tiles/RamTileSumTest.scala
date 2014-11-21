@@ -1,8 +1,7 @@
-package test
+package tiles
 
 import Chisel._
-import tiles._
-import router._
+import main.scala.tiles.RamTile
 
 class RamTileSumTest(t: RamTile) extends Tester(t) {
   def peekAtRamTile() {

@@ -1,6 +1,7 @@
+package memory
+
 import Chisel._
-import tiles._
-import router._
+import main.scala.memory.Ram
 
 class RamTest(r: Ram) extends Tester(r) {
 

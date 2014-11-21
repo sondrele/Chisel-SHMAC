@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router._
 
 class DirectionArbiterTest(a: DirectionArbiter) extends Tester(a) {
   def initArbiterIO() {

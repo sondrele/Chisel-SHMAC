@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router._
 
 class CrossBarTest(c: CrossBar) extends Tester(c) {
 

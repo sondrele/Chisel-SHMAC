@@ -1,4 +1,4 @@
-package test
+package sodor
 
 import Chisel._
 import Sodor.ShmacUnit

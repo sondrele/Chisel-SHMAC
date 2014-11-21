@@ -1,6 +1,8 @@
-package tiles
+package main.scala.tiles
 
 import Chisel._
+import main.scala.memory.Ram
+import main.scala.router.{Packet, Router, RouterIO}
 import router._
 
 class RamTileIO(numPorts: Int) extends RouterIO(numPorts)

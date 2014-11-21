@@ -1,7 +1,7 @@
-package test
+package router
 
 import Chisel._
-import router._
+import main.scala.router._
 
 class RouteComputationTest(xy: RouteComputation) extends Tester(xy) {
   poke(xy.io.xDest, 1)

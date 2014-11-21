@@ -1,8 +1,8 @@
-package test
+package tiles
 
 import Chisel._
-import router.{East, West}
-import tiles._
+import main.scala.router.{East, West}
+import main.scala.tiles.SodorTile
 
 class SodorTileTest(t: SodorTile) extends Tester(t) {
   import t.unit

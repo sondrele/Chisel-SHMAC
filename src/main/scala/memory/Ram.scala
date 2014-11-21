@@ -1,4 +1,4 @@
-package tiles
+package main.scala.memory
 
 import Chisel._
 import router._

@@ -1,4 +1,4 @@
-package router
+package main.scala.router
 
 import Chisel._
 
