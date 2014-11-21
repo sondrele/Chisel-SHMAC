@@ -25,7 +25,8 @@ object TestMain {
 
     args(0) match {
       case "testall" => testModules(modules, testArgs)
-      case other => testModule(other, testArgs)
+      case other if modules.contains(other) => testModule(other, testArgs)
+      case other => sys.error(s"No module with name $other")
     }
   }
 
