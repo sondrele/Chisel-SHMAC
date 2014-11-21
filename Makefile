@@ -13,9 +13,18 @@ SW = --backend c
 HW = --backend v
 TEST = --compile --genHarness --test
 
-.PHONY: clean testall verilog
+.PHONY: clean all router units tiles verilog
 
-testall:
+all:
+	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
+
+router:
+	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
+
+units:
+	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
+
+tiles:
 	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
 
 %.out:

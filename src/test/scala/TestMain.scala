@@ -12,7 +12,8 @@ object TestMain {
 
   def main(args: Array[String]): Unit = {
     val testArgs = args.slice(1, args.length)
-    val modules = Array(
+
+    val routerTests = Array(
       "RouteComputation",
       "InputPort",
       "OutputPort",
@@ -20,17 +21,32 @@ object TestMain {
       "DirectionArbiter",
       "Packet",
       "DirectionRouter",
-      "Router",
+      "Router"
+    )
+
+    val unitTests = Array(
       "Ram",
+      "StoreImm",
+      "AddImm",
+      "LoadStore",
+      "LoadAddStore"
+    )
+
+    val tileTests = Array(
       "RamTile",
-      "ShmacUnit",
+      "RamTileSum",
       "SodorTile"
     )
 
+    val allTests = routerTests ++ unitTests ++ tileTests
+
     args(0) match {
-      case "testall" => testModules(modules, testArgs)
-      case other if modules.contains(other) => testModule(other, testArgs)
-      case other => sys.error(s"No module with name $other")
+      case "router" => testModules(routerTests, testArgs)
+      case "units" => testModules(unitTests, testArgs)
+      case "tiles" => testModules(tileTests, testArgs)
+      case "all" => testModules(allTests, testArgs)
+      case other if allTests.contains(other) => testModule(other, testArgs)
+      case none => sys.error(s"No module with name $none")
     }
   }
 
@@ -66,33 +82,27 @@ object TestMain {
     case "Ram" => chiselMainTest(args, () => Module(new Ram(depth = 8, dataWidth = 32))) {
       r => new RamTest(r)
     }
-    case "RamTile" =>
-      chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4, memDepth = 4096))) {
-       t => new RamTileTest(t)
-      }
-      chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4, memDepth = 4096))) {
+    case "StoreImm" => chiselMainTest(args, () => Module(new ShmacUnit())) {
+      t => new ShmacStoreImmediateTest(t)
+    }
+    case "AddImm" => chiselMainTest(args, () => Module(new ShmacUnit())) {
+      t => new ShmacAddImmTest(t)
+    }
+    case "LoadStore" => chiselMainTest(args, () => Module(new ShmacUnit())) {
+      t => new ShmacLoadStoreTest(t)
+    }
+    case "LoadAddStore" => chiselMainTest(args, () => Module(new ShmacUnit())) {
+      t => new ShmacLoadAddStoreTest(t)
+    }
+    case "RamTile" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4, memDepth = 4096))) {
+      t => new RamTileTest(t)
+    }
+    case "RamTileSum" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4, memDepth = 4096))) {
       t => new RamTileSumTest(t)
-      }
-    case "ShmacUnit" =>
-      chiselMainTest(args, () => Module(new ShmacUnit())) {
-       t => new ShmacStoreImmediateTest(t)
-      }
-      chiselMainTest(args, () => Module(new ShmacUnit())) {
-        t => new ShmacAddImmTest(t)
-      }
-      chiselMainTest(args, () => Module(new ShmacUnit())) {
-        t => new ShmacLoadStoreTest(t)
-      }
-      chiselMainTest(args, () => Module(new ShmacUnit())) {
-        t => new ShmacLoadStoreTest(t)
-      }
-      chiselMainTest(args, () => Module(new ShmacUnit())) {
-        t => new ShmacLoadAddStoreTest(t)
-      }
-    case "SodorTile" =>
-      chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
-        t => new SodorTileTest(t)
-      }
+    }
+    case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
+      t => new SodorTileTest(t)
+    }
     case other => sys.error(s"No module with name $other")
   }
 
