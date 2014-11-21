@@ -6,8 +6,8 @@ import tiles._
 
 class SodorTileTest(t: SodorTile) extends Tester(t) {
   import t.unit
-//  import t.{localPort => local}
-//  import t.io.ports
+  import t.{localPort => local}
+  import t.io.ports
 
   def checkImemRequest(valid: Int,  addr: Int, imem_resp_ready: Int = 1): Unit = {
     expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
@@ -24,7 +24,7 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
     // Verify that there is no dmem request
     expect(unit.core.io.dmem.resp.ready, 0)
 
-    expect(t.localPort.in.bits.header.address, addr)
+    expect(local.in.bits.header.address, addr)
   }
 
   def checkDmemRequest(valid: Int, addr: Int, data: Int, fcn: Int = 1): Unit = {
@@ -43,17 +43,17 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
     expect(unit.core.io.dmem.req.bits.addr, addr)
     expect(unit.io.mem.req.bits.data, data)
 
-    expect(t.localPort.in.bits.header.address, addr)
+    expect(local.in.bits.header.address, addr)
   }
 
   def checkImemPortRequest(port: Int, valid: Int, addr: Int): Unit = {
-    expect(t.io.ports(port).out.valid, valid)
-    expect(t.io.ports(port).out.bits.header.address, addr)
+    expect(ports(port).out.valid, valid)
+    expect(ports(port).out.bits.header.address, addr)
   }
 
   def checkDmemPortRequest(port: Int, valid: Int, dmem_req: Array[BigInt]): Unit = {
-    expect(t.io.ports(port).out.valid, valid)
-    expect(t.io.ports(port).out.bits, dmem_req)
+    expect(ports(port).out.valid, valid)
+    expect(ports(port).out.bits, dmem_req)
   }
 
   def peekArbiter(): Unit = {
@@ -90,14 +90,14 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   def peekEast(): Unit = {
     println("#-----")
     println("# Printing east port")
-    peek(t.io.ports(0))
+    peek(ports(0))
     println("#-----")
   }
 
   def peekWest(): Unit = {
     println("#-----")
     println("# Printing east port")
-    peek(t.io.ports(2))
+    peek(ports(2))
     println("#-----")
   }
 
@@ -197,7 +197,7 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
   peekLocal()
   // The requests sent to imem will be arriving at the tiles
   // east output port
-  poke(t.io.ports(0).out.ready, 1)
+  poke(ports(0).out.ready, 1)
 
   step(1) // 2
 
@@ -212,32 +212,32 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
 
   // The packet with the first imem request should be at the east output port
   checkImemPortRequest(East.index, 1, 0x2000)
-  expect(t.io.ports(0).out.bits, imem_ld_request)
+  expect(ports(0).out.bits, imem_ld_request)
   // Serve the first instruction
-  expect(t.io.ports(0).in.ready, 1)
-  poke(t.io.ports(0).in.valid, 1)
-  poke(t.io.ports(0).in.bits, imem_ld_response)
+  expect(ports(0).in.ready, 1)
+  poke(ports(0).in.valid, 1)
+  poke(ports(0).in.bits, imem_ld_response)
 
   step(1) // 4
 
   checkImemPortRequest(East.index, 0, 0)
   // Stop responding to invalid requests
-  expect(t.io.ports(0).out.valid, 0)
-  poke(t.io.ports(0).in.valid, 0)
-  poke(t.io.ports(0).in.bits, empty_packet)
+  expect(ports(0).out.valid, 0)
+  poke(ports(0).in.valid, 0)
+  poke(ports(0).in.bits, empty_packet)
 
   // Wait for the packet to arrive the local output port
-  expect(t.localPort.out.ready, 1)
-  expect(t.localPort.out.valid, 0)
-  expect(t.localPort.out.bits, empty_packet)
+  expect(local.out.ready, 1)
+  expect(local.out.valid, 0)
+  expect(local.out.bits, empty_packet)
 
   step(1) // 5
 
   checkImemPortRequest(East.index, 0, 0)
   // First instruction should have arrive the local output port
-  expect(t.localPort.out.ready, 1)
-  expect(t.localPort.out.valid, 1)
-  expect(t.localPort.out.bits, imem_ld_response)
+  expect(local.out.ready, 1)
+  expect(local.out.valid, 1)
+  expect(local.out.bits, imem_ld_response)
 
   // Verify that mem is waiting for instruction
   expect(unit.io.mem.resp.valid, 1)
@@ -258,32 +258,32 @@ class SodorTileTest(t: SodorTile) extends Tester(t) {
 
   // The packet with the next imem request should be at the east output port
   checkImemPortRequest(East.index, 1, 0x2004)
-  expect(t.io.ports(0).out.bits, imem_sw_request)
+  expect(ports(0).out.bits, imem_sw_request)
   // Respond with the next instruction
-  expect(t.io.ports(0).in.ready, 1)
-  poke(t.io.ports(0).in.valid, 1)
-  poke(t.io.ports(0).in.bits, imem_sw_response)
+  expect(ports(0).in.ready, 1)
+  poke(ports(0).in.valid, 1)
+  poke(ports(0).in.bits, imem_sw_response)
 
   step(1) // 9
 
   checkImemPortRequest(East.index, 0, 0)
   // Stop responding to invalid requests
-  expect(t.io.ports(0).out.valid, 0)
-  poke(t.io.ports(0).in.valid, 0)
-  poke(t.io.ports(0).in.bits, empty_packet)
+  expect(ports(0).out.valid, 0)
+  poke(ports(0).in.valid, 0)
+  poke(ports(0).in.bits, empty_packet)
 
   // Wait for the packet to arrive the local output port
-  expect(t.localPort.out.ready, 1)
-  expect(t.localPort.out.valid, 0)
-  expect(t.localPort.out.bits, empty_packet)
+  expect(local.out.ready, 1)
+  expect(local.out.valid, 0)
+  expect(local.out.bits, empty_packet)
 
   step(1) // 10
 
   checkImemPortRequest(East.index, 0, 0)
   // First instruction should have arrive the local output port
-  expect(t.localPort.out.ready, 1)
-  expect(t.localPort.out.valid, 1)
-  expect(t.localPort.out.bits, imem_sw_response)
+  expect(local.out.ready, 1)
+  expect(local.out.valid, 1)
+  expect(local.out.bits, imem_sw_response)
 
   // Verify that mem is waiting for instruction
   expect(unit.io.mem.resp.valid, 1)
