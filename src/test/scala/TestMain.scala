@@ -1,5 +1,5 @@
 import Chisel._
-import Sodor.ShmacUnit
+import Sodor.SodorUnit
 import main.scala.memory.Ram
 import main.scala.router._
 import main.scala.tiles.{SodorTileConf, SodorTile, RamTile}
@@ -26,17 +26,17 @@ object TestMain {
 
     val unitTests = Array(
       "Ram",
-      "StoreImm",
-      "AddImm",
-      "LoadStore",
-      "LoadAddStore"
+      "SodorStoreImm",
+      "SodorAddImm",
+      "SodorLoadStore",
+      "SodorLoadAddStore"
     )
 
     val tileTests = Array(
       "RamTile",
       "RamTileSum",
       "SodorTile",
-      "SodorLoadStore"
+      "SodorTileLoadStore"
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests
@@ -83,17 +83,17 @@ object TestMain {
     case "Ram" => chiselMainTest(args, () => Module(new Ram(depth = 8, dataWidth = 32))) {
       r => new RamTest(r)
     }
-    case "StoreImm" => chiselMainTest(args, () => Module(new ShmacUnit())) {
-      t => new ShmacStoreImmediateTest(t)
+    case "SodorStoreImm" => chiselMainTest(args, () => Module(new SodorUnit())) {
+      t => new SodorStoreImmTest(t)
     }
-    case "AddImm" => chiselMainTest(args, () => Module(new ShmacUnit())) {
-      t => new ShmacAddImmTest(t)
+    case "SodorAddImm" => chiselMainTest(args, () => Module(new SodorUnit())) {
+      t => new SodorAddImmTest(t)
     }
-    case "LoadStore" => chiselMainTest(args, () => Module(new ShmacUnit())) {
-      t => new ShmacLoadStoreTest(t)
+    case "SodorLoadStore" => chiselMainTest(args, () => Module(new SodorUnit())) {
+      t => new SodorLoadStoreTest(t)
     }
-    case "LoadAddStore" => chiselMainTest(args, () => Module(new ShmacUnit())) {
-      t => new ShmacLoadAddStoreTest(t)
+    case "SodorLoadAddStore" => chiselMainTest(args, () => Module(new SodorUnit())) {
+      t => new SodorLoadAddStoreTest(t)
     }
     case "RamTile" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4, memDepth = 4096))) {
       t => new RamTileTest(t)
@@ -104,7 +104,7 @@ object TestMain {
     case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
       t => new SodorTileTest(t)
     }
-    case "SodorLoadStore" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
+    case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
       t => new SodorTileLoadStoreTest(t)
     }
     case other => sys.error(s"No module with name $other")

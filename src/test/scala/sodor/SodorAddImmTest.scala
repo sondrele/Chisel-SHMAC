@@ -1,8 +1,8 @@
 package sodor
 
-import Sodor.ShmacUnit
+import Sodor.SodorUnit
 
-class ShmacAddImmTest(t: ShmacUnit) extends ShmacTester(t) {
+class SodorAddImmTest(t: SodorUnit) extends SodorTester(t) {
 
   poke(t.io.host.reset, 1)
   poke(t.io.mem.req.ready, 0)

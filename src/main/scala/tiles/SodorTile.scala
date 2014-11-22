@@ -21,7 +21,7 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: S
     io.ports(i) <> router.ports(i)
   }
 
-  val unit = Module(new ShmacUnit())
+  val unit = Module(new SodorUnit())
   unit.io.host <> io.host
 
   def isImemRequest: Bool = {

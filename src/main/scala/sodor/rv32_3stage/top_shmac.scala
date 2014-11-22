@@ -9,18 +9,18 @@ import ReferenceChipBackend._
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
-class ShmacUnitIO(implicit val conf: SodorConfiguration) extends Bundle
+class SodorUnitIO(implicit val conf: SodorConfiguration) extends Bundle
 {
   val irq = Bool(INPUT)
   val host = new HTIFIO()
   val mem  = new MemPortIo(conf.xprlen)
 }
 
-class ShmacUnit extends Module
+class SodorUnit extends Module
 {
   implicit val sodor_conf = SodorConfiguration()
 
-  val io = new ShmacUnitIO()
+  val io = new SodorUnitIO()
 
   val core   = Module(new Core(resetSignal = io.host.reset))
   val arbiter = Module(new SodorMemArbiter())
@@ -39,10 +39,4 @@ class ShmacUnit extends Module
   io.host.mem_rep.bits := core.io.host.mem_rep.bits
 
   arbiter.io.imem.req.bits.data := core.io.imem.req.bits.data
-}
-
-object ShmacUnit {
-  def main(args: Array[String]): Unit = {
-    chiselMain(args, () => Module(new ShmacUnit()))
-  }
 }

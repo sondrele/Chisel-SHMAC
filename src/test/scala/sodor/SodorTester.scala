@@ -1,9 +1,9 @@
 package sodor
 
 import Chisel._
-import Sodor.ShmacUnit
+import Sodor.SodorUnit
 
-class ShmacTester(t: ShmacUnit) extends Tester(t) {
+class SodorTester(t: SodorUnit) extends Tester(t) {
 
   def peekArbiter(): Unit = {
     println("#-----")

@@ -1,9 +1,8 @@
 package sodor
 
-import Chisel._
-import Sodor.ShmacUnit
+import Sodor.SodorUnit
 
-class ShmacLoadAddStoreTest(t: ShmacUnit) extends ShmacTester(t) {
+class SodorLoadAddStoreTest(t: SodorUnit) extends SodorTester(t) {
 
   poke(t.io.host.reset, 1)
   poke(t.io.mem.req.ready, 0)
