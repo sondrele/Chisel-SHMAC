@@ -26,6 +26,11 @@ class SodorTileTester(t: SodorTile) extends Tester(t) {
     expect(local.in.bits.header.address, addr)
   }
 
+  def checkImemPortRequest(port: Int, valid: Int, addr: Int): Unit = {
+    expect(ports(port).out.valid, valid)
+    expect(ports(port).out.bits.header.address, addr)
+  }
+
   def checkDmemRequest(valid: Int, addr: Int, data: Int, fcn: Int = 1): Unit = {
     expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
     expect(unit.io.mem.req.bits.fcn, fcn)
@@ -45,14 +50,21 @@ class SodorTileTester(t: SodorTile) extends Tester(t) {
     expect(local.in.bits.header.address, addr)
   }
 
-  def checkImemPortRequest(port: Int, valid: Int, addr: Int): Unit = {
-    expect(ports(port).out.valid, valid)
-    expect(ports(port).out.bits.header.address, addr)
-  }
-
   def checkDmemPortRequest(port: Int, valid: Int, dmem_req: Array[BigInt]): Unit = {
     expect(ports(port).out.valid, valid)
     expect(ports(port).out.bits, dmem_req)
+  }
+
+  def checkLocalPort(valid: Int, packet: Array[BigInt]): Unit = {
+    expect(local.out.ready, 1)
+    expect(local.out.valid, valid)
+    expect(local.out.bits, packet)
+  }
+
+  def respondWithPacket(port: Int, packet: Array[BigInt]): Unit = {
+    expect(ports(port).out.valid, 1)
+    poke(ports(port).in.valid, 1)
+    poke(ports(port).in.bits, packet)
   }
 
   def peekArbiter(): Unit = {

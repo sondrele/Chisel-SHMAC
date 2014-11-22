@@ -99,8 +99,6 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   // when it knows that the receiver of its request is ready
   poke(t.io.reqReady, 1)
   checkImemRequest(1, 0x2000)
-
-  peekLocal()
   // The requests sent to imem will be arriving at the tiles
   // east output port
   poke(ports(0).out.ready, 1)
@@ -110,7 +108,6 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   // Processor is waiting for the response with the first instruction
   // to arrive, thus not requesting the next instruction
   checkImemRequest(0, 0x2004)
-
   // The request has not yet reached the east output port
   checkImemPortRequest(East.index, 0, 0)
 
@@ -118,11 +115,8 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
 
   // The packet with the first imem request should be at the east output port
   checkImemPortRequest(East.index, 1, 0x2000)
-  expect(ports(0).out.bits, imem_ld_request)
   // Serve the first instruction
-  expect(ports(0).in.ready, 1)
-  poke(ports(0).in.valid, 1)
-  poke(ports(0).in.bits, imem_ld_response)
+  respondWithPacket(East.index, imem_ld_response)
 
   step(1) // 4
 
@@ -131,20 +125,14 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   expect(ports(0).out.valid, 0)
   poke(ports(0).in.valid, 0)
   poke(ports(0).in.bits, empty_packet)
-
   // Wait for the packet to arrive the local output port
-  expect(local.out.ready, 1)
-  expect(local.out.valid, 0)
-  expect(local.out.bits, empty_packet)
+  checkLocalPort(0, empty_packet)
 
   step(1) // 5
 
   checkImemPortRequest(East.index, 0, 0)
   // First instruction should have arrive the local output port
-  expect(local.out.ready, 1)
-  expect(local.out.valid, 1)
-  expect(local.out.bits, imem_ld_response)
-
+  checkLocalPort(1, imem_ld_response)
   // Verify that mem is waiting for instruction
   expect(unit.io.mem.resp.valid, 1)
   expect(unit.io.mem.resp.bits.data, ld_a)
@@ -166,9 +154,7 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   checkImemPortRequest(East.index, 1, 0x2004)
   expect(ports(0).out.bits, imem_sw_request)
   // Respond with the next instruction
-  expect(ports(0).in.ready, 1)
-  poke(ports(0).in.valid, 1)
-  poke(ports(0).in.bits, imem_sw_response)
+  respondWithPacket(East.index, imem_sw_response)
 
   step(1) // 9
 
@@ -177,20 +163,14 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   expect(ports(0).out.valid, 0)
   poke(ports(0).in.valid, 0)
   poke(ports(0).in.bits, empty_packet)
-
   // Wait for the packet to arrive the local output port
-  expect(local.out.ready, 1)
-  expect(local.out.valid, 0)
-  expect(local.out.bits, empty_packet)
+  checkLocalPort(0, empty_packet)
 
   step(1) // 10
 
   checkImemPortRequest(East.index, 0, 0)
   // First instruction should have arrive the local output port
-  expect(local.out.ready, 1)
-  expect(local.out.valid, 1)
-  expect(local.out.bits, imem_sw_response)
-
+  checkLocalPort(1, imem_sw_response)
   // Verify that mem is waiting for instruction
   expect(unit.io.mem.resp.valid, 1)
   expect(unit.io.mem.resp.bits.data, sw_a)
