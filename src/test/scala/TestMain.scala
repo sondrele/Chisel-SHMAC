@@ -2,7 +2,7 @@ import Chisel._
 import Sodor.ShmacUnit
 import main.scala.memory.Ram
 import main.scala.router._
-import main.scala.tiles.{SodorTile, RamTile}
+import main.scala.tiles.{SodorTileConf, SodorTile, RamTile}
 import memory.RamTest
 import router._
 import sodor._
@@ -40,7 +40,7 @@ object TestMain {
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests
-
+    implicit val conf = SodorTileConf((2, 1), (0, 0))
     args(0) match {
       case "router" => testModules(routerTests, testArgs)
       case "units" => testModules(unitTests, testArgs)
@@ -51,11 +51,11 @@ object TestMain {
     }
   }
 
-  def testModules(modules: Array[String], args: Array[String]) = {
+  def testModules(modules: Array[String], args: Array[String])(implicit conf: SodorTileConf) = {
     modules.map(module => testModule(module, args))
   }
 
-  def testModule(module: String, args: Array[String]) = module match {
+  def testModule(module: String, args: Array[String])(implicit conf: SodorTileConf) = module match {
     case "RouteComputation" => chiselMainTest(args, () => Module(new RouteComputation())) {
       r => new RouteComputationTest(r)
     }
