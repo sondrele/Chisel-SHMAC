@@ -8,7 +8,6 @@ import Sodor._
 class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
   implicit val sodorConf = SodorConfiguration()
   val host = new HTIFIO()
-  val reqReady = Bool(INPUT)
 }
 
 class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module with MemoryOpConstants {
@@ -27,8 +26,12 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module w
     unit.io.mem.req.valid && unit.io.mem.req.bits.fcn === M_XRD && unit.io.mem.req.bits.typ === MT_WU
   }
 
-  def isDmemRequest: Bool = {
+  def isDmemWriteRequest: Bool = {
     unit.io.mem.req.valid && unit.io.mem.req.bits.fcn === M_XWR && unit.io.mem.req.bits.typ === MT_W
+  }
+
+  def isDmemReadRequest: Bool = {
+    unit.io.mem.req.valid && unit.io.mem.req.bits.fcn === M_XRD  && unit.io.mem.req.bits.typ === MT_W
   }
 
   val localPort = router.ports(numPorts)
@@ -36,7 +39,9 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module w
   val address = packet.header.address
   val payload = packet.payload
   val isResponse = packet.header.reply
-  val writeValidReg = Reg(Bool(), next=Bool(false))
+
+  val writeValidReg = Reg(Bool(), next = Bool(false))
+  val waitingForDmem = Reg(Bool(), init = Bool(false))
 
   localPort.out.ready := unit.io.mem.resp.ready
   unit.io.mem.resp.valid := (localPort.out.valid && isResponse) || writeValidReg
@@ -51,8 +56,12 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module w
   when (isImemRequest) {
     outPacket.dest.y := UInt(1, width = 4)
     outPacket.dest.x := UInt(2, width = 4)
-  }.elsewhen (isDmemRequest) {
+  }.elsewhen (isDmemWriteRequest) {
     writeValidReg := Bool(true)
+    outPacket.dest.y := UInt(0, width = 4)
+    outPacket.dest.x := UInt(0, width = 4)
+  }.elsewhen (isDmemReadRequest) {
+    waitingForDmem := Bool(true)
     outPacket.dest.y := UInt(0, width = 4)
     outPacket.dest.x := UInt(0, width = 4)
   }.otherwise {
@@ -60,12 +69,23 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module w
     outPacket.dest.x := UInt(0, width = 4)
   }
 
+  // When the processor is waiting for data after a dmem read request it will consume
+  // the next package as data if mem.req.ready is 1
+  // This fix stalls the processor until the first packet has arrived
+  when (waitingForDmem) {
+    unit.io.mem.req.ready := Bool(false)
+    when (localPort.out.valid) {
+      waitingForDmem := Bool(false)
+    }
+  }.otherwise {
+    unit.io.mem.req.ready := localPort.in.ready
+  }
+
   outPacket.header.writeReq := unit.io.mem.req.bits.fcn
 
   outPacket.payload := unit.io.mem.req.bits.data
   outPacket.header.address := unit.io.mem.req.bits.addr
 
-  unit.io.mem.req.ready := localPort.in.ready && io.reqReady
   localPort.in.valid := unit.io.mem.req.valid
   localPort.in.bits.assign(outPacket)
 }

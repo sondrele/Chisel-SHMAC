@@ -114,7 +114,6 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
   )
 
   poke(t.io.host.reset, 1)
-  poke(t.io.reqReady, 0)
 
   step(1) // 1
 
@@ -123,7 +122,6 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
 
   // Processor starts requesting the first instruction at 0x2000
   // when it knows that the receiver of its request is ready
-  poke(t.io.reqReady, 1)
   checkImemRequest(1, 0x2000)
   // The requests sent to imem will be arriving at the tiles east output port
   poke(ports(0).out.ready, 1)
@@ -168,9 +166,11 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
   checkImemPortRequest(East.index, 0, 0)
   // Processor should issue issue dmem request
   checkDmemRequest(1, 0xa, 0x0, 0)
+  expect(t.waitingForDmem, 0)
 
   step(1) // 7
 
+  expect(t.waitingForDmem, 1)
   checkImemRequest(0, 0x2004, imem_resp_ready = 0)
   // The 2nd request should not yet have arrive the output port
   checkDmemPortRequest(West.index, 0, empty_packet)
@@ -186,6 +186,7 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
 
   step(1) // 9
 
+  expect(t.waitingForDmem, 1)
   checkImemRequest(0, 0x2004, imem_resp_ready = 0)
   checkDmemPortRequest(West.index, 0, empty_packet)
   // Stop responding to invalid requests
@@ -198,7 +199,7 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
 
   // This signal is currently manually controlled. When set to 0 the processor
   // will not issue a imem request, and instead consume the dmem response
-  poke(t.io.reqReady, 0)
+  expect(t.waitingForDmem, 1)
   checkImemPortRequest(East.index, 0, 0)
   // First instruction should have arrive the local output port
   checkLocalPort(1, dmem_lw_response)
@@ -209,7 +210,7 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
 
   step(1) // 11
 
-  poke(t.io.reqReady, 1)
+  expect(t.waitingForDmem, 0)
   checkImemRequest(1, 0x2004)
   // The 2nd request should not yet have arrive the output port
   checkImemPortRequest(East.index, 0, 0)

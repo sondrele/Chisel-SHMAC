@@ -88,7 +88,6 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   )
 
   poke(t.io.host.reset, 1)
-  poke(t.io.reqReady, 0)
 
   step(1) // 1
 
@@ -97,7 +96,6 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
 
   // Processor starts requesting the first instruction at 0x2000
   // when it knows that the receiver of its request is ready
-  poke(t.io.reqReady, 1)
   checkImemRequest(1, 0x2000)
   // The requests sent to imem will be arriving at the tiles
   // east output port
