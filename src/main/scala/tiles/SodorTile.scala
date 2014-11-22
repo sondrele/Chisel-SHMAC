@@ -32,10 +32,6 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: S
     unit.io.mem.req.valid && unit.io.mem.req.bits.typ === MT_W
   }
 
-  def isDmemReadRequest: Bool = {
-    unit.io.mem.req.valid && unit.io.mem.req.bits.fcn === M_XRD  && unit.io.mem.req.bits.typ === MT_W
-  }
-
   val localPort = router.ports(numPorts)
   val packet = localPort.out.bits
   val address = packet.header.address
@@ -54,19 +50,16 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: S
   outPacket.sender.y := UInt(y, width = 4)
   outPacket.sender.x := UInt(x, width = 4)
 
-  // The instruction memory is currently hard coded to be at tile (2, 1)
   when (isImemRequest) {
     outPacket.dest.y := UInt(conf.imem._2, width = 4)
     outPacket.dest.x := UInt(conf.imem._1, width = 4)
   }.elsewhen (isDmemRequest) {
-    when (isDmemReadRequest) {
+    when (unit.io.mem.req.bits.fcn === M_XRD) {
       waitingForDmemReg := Bool(true)
-    }.otherwise {
+    }
+    when (unit.io.mem.req.bits.fcn === M_XWR) {
       writeValidDmemReg := Bool(true)
     }
-    outPacket.dest.y := UInt(conf.dmem._2, width = 4)
-    outPacket.dest.x := UInt(conf.dmem._1, width = 4)
-  }.elsewhen (isDmemReadRequest) {
     outPacket.dest.y := UInt(conf.dmem._2, width = 4)
     outPacket.dest.x := UInt(conf.dmem._1, width = 4)
   }.otherwise {

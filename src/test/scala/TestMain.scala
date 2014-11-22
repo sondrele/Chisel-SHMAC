@@ -40,7 +40,7 @@ object TestMain {
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests
-    implicit val conf = SodorTileConf((2, 1), (0, 0))
+    implicit val conf = SodorTileConf((2, 1), (0, 1))
     args(0) match {
       case "router" => testModules(routerTests, testArgs)
       case "units" => testModules(unitTests, testArgs)

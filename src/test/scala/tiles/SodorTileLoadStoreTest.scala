@@ -54,7 +54,7 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
     1,      // Sender x
     1,      // Sender y
     0,      // Dest x
-    0       // Dest y
+    1       // Dest y
   )
 
   val dmem_lw_response = Array[BigInt](
@@ -68,7 +68,7 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
     1,      // Sender x
     1,      // Sender y
     0,      // Dest x
-    0       // Dest y
+    1       // Dest y
   )
 
   val imem_sw_request = Array[BigInt](
@@ -110,7 +110,7 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
     1,      // Sender x
     1,      // Sender y
     0,      // Dest x
-    0       // Dest y
+    1       // Dest y
   )
 
   poke(t.io.host.reset, 1)
