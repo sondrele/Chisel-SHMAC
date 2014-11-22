@@ -35,7 +35,8 @@ object TestMain {
     val tileTests = Array(
       "RamTile",
       "RamTileSum",
-      "SodorTile"
+      "SodorTile",
+      "SodorLoadStore"
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests
@@ -102,6 +103,9 @@ object TestMain {
     }
     case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
       t => new SodorTileTest(t)
+    }
+    case "SodorLoadStore" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
+      t => new SodorTileLoadStoreTest(t)
     }
     case other => sys.error(s"No module with name $other")
   }

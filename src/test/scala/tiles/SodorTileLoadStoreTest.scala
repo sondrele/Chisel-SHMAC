@@ -3,17 +3,16 @@ package tiles
 import main.scala.router.{East, West}
 import main.scala.tiles.SodorTile
 
-class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
+class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
   import t.unit
   import t.{localPort => local}
   import t.io.ports
 
-  // I-type      Width         rd            LUI
-  val ld_a    = (0x1 << 12) | (0x1 << 7)  | 0x37 // 0x2000
-  // S-type     rs2           Base          Function      Addr        SW
-  val sw_a   = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xa << 7) | 0x23 // 0x2004
-  val ld_b   = (0x2 << 12) | (0x1 << 7)  | 0x37 // 0x2008
-  val sw_b   = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xb << 7) | 0x23 // 0x200c
+
+  // I-type      Address       Width         rd            LD
+  val ld_a     = (0xa << 20) | (0x2 << 12) | (0x2 << 7)  | 0x03
+  // S-type      rs2           Base          Function      Addr        SW
+  val sw_a     = (0x2 << 20) | (0x0 << 15) | (0x2 << 12) | (0xd << 7) | 0x23
 
   val empty_packet = Array[BigInt](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -45,6 +44,34 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
     1     // Dest y
   )
 
+  val dmem_lw_request = Array[BigInt](
+    0xa,    // Header address
+    0,      // Header reply
+    0,      // Header writeReq
+    0,      // Header writeMask
+    0,      // Header exop
+    0,      // Header error
+    0,      // Payload
+    1,      // Sender x
+    1,      // Sender y
+    0,      // Dest x
+    0       // Dest y
+  )
+
+  val dmem_lw_response = Array[BigInt](
+    0,      // Header address
+    1,      // Header reply
+    0,      // Header writeReq
+    0,      // Header writeMask
+    0,      // Header exop
+    0,      // Header error
+    0xbeef, // Payload
+    1,      // Sender x
+    1,      // Sender y
+    0,      // Dest x
+    0       // Dest y
+  )
+
   val imem_sw_request = Array[BigInt](
     0x2004, // Header address
     0,      // Header reply
@@ -74,13 +101,13 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   )
 
   val dmem_sw_request = Array[BigInt](
-    0xa,    // Header address
+    0xd,    // Header address
     0,      // Header reply
     1,      // Header writeReq
     0,      // Header writeMask
     0,      // Header exop
     0,      // Header error
-    0x1000, // Payload
+    0xbeef, // Payload
     1,      // Sender x
     1,      // Sender y
     0,      // Dest x
@@ -152,25 +179,77 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   step(1) // 6
 
   checkImemPortRequest(East.index, 0, 0)
-  // Processor should issue the request for the next instruction
-  checkImemRequest(1, 0x2004)
+  // Processor should issue issue dmem request
+  checkDmemRequest(1, 0xa, 0x0, 0)
 
   step(1) // 7
+
+  checkImemRequest(0, 0x2004, imem_resp_ready = 0)
+  // The 2nd request should not yet have arrive the output port
+  checkDmemPortRequest(West.index, 0, empty_packet)
+
+  step(1) // 8
+
+  checkImemRequest(0, 0x2004, imem_resp_ready = 0)
+  // Packet with dmem read request should be at west output port
+  checkDmemPortRequest(West.index, 1, dmem_lw_request)
+  poke(ports(West.index).out.ready, 1) // Consume packet
+  // Respond with the next instruction
+  expect(ports(West.index).in.ready, 1)
+  poke(ports(West.index).in.valid, 1)
+  poke(ports(West.index).in.bits, dmem_lw_response)
+
+  step(1) // 9
+
+  checkImemRequest(0, 0x2004, imem_resp_ready = 0)
+  checkDmemPortRequest(West.index, 0, empty_packet)
+  // Stop responding to invalid requests
+  poke(ports(West.index).in.valid, 0)
+  poke(ports(West.index).in.bits, empty_packet)
+
+  // Wait for the packet to arrive the local output port
+  expect(local.out.ready, 1)
+  expect(local.out.valid, 0)
+  expect(local.out.bits, empty_packet)
+
+  step(1) // 10
+
+  // This signal is currently manually controlled. When set to 0 the processor
+  // will not issue a imem request, and instead consume the dmem response
+  poke(t.io.reqReady, 0)
+  checkImemPortRequest(East.index, 0, 0)
+  // First instruction should have arrive the local output port
+  expect(local.out.ready, 1)
+  expect(local.out.valid, 1)
+  expect(local.out.bits, dmem_lw_response)
+
+  // Verify that mem is waiting for instruction
+  expect(unit.io.mem.resp.valid, 1)
+  expect(unit.io.mem.resp.bits.data, 0xbeef)
+
+  step(1) // 11
+
+  poke(t.io.reqReady, 1)
+  checkImemRequest(1, 0x2004)
+  // The 2nd request should not yet have arrive the output port
+  checkImemPortRequest(East.index, 0, 0)
+
+  step(1) // 12
 
   // The 2nd request should not yet have arrive the output port
   checkImemPortRequest(East.index, 0, 0)
 
-  step(1) // 8
+  step(1) // 13
 
   // The packet with the next imem request should be at the east output port
   checkImemPortRequest(East.index, 1, 0x2004)
-  expect(ports(0).out.bits, imem_sw_request)
+  expect(ports(East.index).out.bits, imem_sw_request)
   // Respond with the next instruction
-  expect(ports(0).in.ready, 1)
-  poke(ports(0).in.valid, 1)
-  poke(ports(0).in.bits, imem_sw_response)
+  expect(ports(East.index).in.ready, 1)
+  poke(ports(East.index).in.valid, 1)
+  poke(ports(East.index).in.bits, imem_sw_response)
 
-  step(1) // 9
+  step(1) // 14
 
   checkImemPortRequest(East.index, 0, 0)
   // Stop responding to invalid requests
@@ -183,7 +262,7 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   expect(local.out.valid, 0)
   expect(local.out.bits, empty_packet)
 
-  step(1) // 10
+  step(1) // 15
 
   checkImemPortRequest(East.index, 0, 0)
   // First instruction should have arrive the local output port
@@ -195,15 +274,13 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   expect(unit.io.mem.resp.valid, 1)
   expect(unit.io.mem.resp.bits.data, sw_a)
 
-  step(1) // 11
+  step(1) // 16
 
   checkImemPortRequest(East.index, 0, 0)
   // Processor should issue store word request
-  checkDmemRequest(1, 0xa, 0x1000, fcn = 1)
+  checkDmemRequest(1, 0xd, 0xbeef, fcn = 1)
 
-  peekLocal()
-
-  step(1) // 12
+  step(1) // 17
 
   // The resp.valid signal should be set automatically when the processor
   // issues a write-request because it's not waiting for a response
@@ -211,10 +288,10 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   // Issuing request for next instruction and don't care about a response for
   // the write
   checkImemRequest(1, 0x2008)
-  // The request should not yet have arrive the output port
+  // The request should not yet have arrived the output port
   checkDmemPortRequest(West.index, 0, empty_packet)
 
-  step(1) // 13
+  step(1) // 18
 
   // The resp.valid should be back to normal on the next cycle
   expect(unit.io.mem.resp.valid, 0)
@@ -224,4 +301,5 @@ class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   // at west output instead of east
   checkDmemPortRequest(West.index, 1, dmem_sw_request)
 
+  peekWest()
 }
