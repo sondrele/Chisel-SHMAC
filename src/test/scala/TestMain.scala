@@ -2,6 +2,7 @@ import Chisel._
 import Sodor.SodorUnit
 import main.scala.memory.Ram
 import main.scala.router._
+import main.scala.shmac.Shmac
 import main.scala.tiles.{SodorTileConf, SodorTile, RamTile}
 import memory.RamTest
 import router._
@@ -39,12 +40,17 @@ object TestMain {
       "SodorTileLoadStore"
     )
 
-    val allTests = routerTests ++ unitTests ++ tileTests
+    val shmacTests = Array(
+      "Shmac"
+    )
+
+    val allTests = routerTests ++ unitTests ++ tileTests ++ shmacTests
     implicit val conf = SodorTileConf((2, 1), (0, 1))
     args(0) match {
       case "router" => testModules(routerTests, testArgs)
       case "units" => testModules(unitTests, testArgs)
       case "tiles" => testModules(tileTests, testArgs)
+      case "shmac" => testModules(shmacTests, testArgs)
       case "all" => testModules(allTests, testArgs)
       case other if allTests.contains(other) => testModule(other, testArgs)
       case none => sys.error(s"No module with name $none")
@@ -106,6 +112,9 @@ object TestMain {
     }
     case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
       t => new SodorTileLoadStoreTest(t)
+    }
+    case "Shmac" => chiselMainTest(args, () => Module(new Shmac())) {
+      s => new ShmacStoreImmTest(s)
     }
     case other => sys.error(s"No module with name $other")
   }

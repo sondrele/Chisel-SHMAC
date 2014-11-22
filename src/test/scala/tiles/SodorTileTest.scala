@@ -5,15 +5,12 @@ import main.scala.tiles.SodorTile
 
 class SodorTileTest(t: SodorTile) extends SodorTileTester(t) {
   import t.unit
-  import t.{localPort => local}
   import t.io.ports
 
   // I-type      Width         rd            LUI
   val ld_a    = (0x1 << 12) | (0x1 << 7)  | 0x37 // 0x2000
   // S-type     rs2           Base          Function      Addr        SW
   val sw_a   = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xa << 7) | 0x23 // 0x2004
-  val ld_b   = (0x2 << 12) | (0x1 << 7)  | 0x37 // 0x2008
-  val sw_b   = (0x1 << 20) | (0x0 << 15) | (0x2 << 12) | (0xb << 7) | 0x23 // 0x200c
 
   val empty_packet = Array[BigInt](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
