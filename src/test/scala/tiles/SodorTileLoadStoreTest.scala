@@ -13,8 +13,6 @@ class SodorTileLoadStoreTest(t: SodorTile) extends SodorTileTester(t) {
   // S-type      rs2           Base          Function      Addr        SW
   val sw_a     = (0x2 << 20) | (0x0 << 15) | (0x2 << 12) | (0xd << 7) | 0x23
 
-  val empty_packet = Array[BigInt](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
   val imem_ld_request = Array[BigInt](
     0x2000, // Header address
     0,      // Header reply

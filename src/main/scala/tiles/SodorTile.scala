@@ -37,8 +37,16 @@ class SodorTile(implicit conf: SodorTileConfig) extends Tile with MemoryOpConsta
   val payload = packet.payload
   val isResponse = packet.header.reply
 
+  // Set to true when the processor is writing to dmem, in order for it not to
+  // stall and wait for a write-response which it will never receive
   val writeValidDmemReg = Reg(Bool(), next = Bool(false))
+  // Is used to stall the processor from issuing a read-request for the next
+  // instruction when it is waiting for data
   val waitingForDmemReg = Reg(Bool(), init = Bool(false))
+  // Used in combination with waitingForDmemReg. Makes it possible for the
+  // processor to read its Tile-location
+  val readingTileLocReg = Reg(Bool(), init = Bool(false))
+  val tileLocReg = Reg(UInt(), init = Cat(UInt(conf.tile.x), UInt(conf.tile.y)))
 
   localPort.out.ready := unit.io.mem.resp.ready
   unit.io.mem.resp.valid := (localPort.out.valid && isResponse) || writeValidDmemReg
@@ -49,13 +57,31 @@ class SodorTile(implicit conf: SodorTileConfig) extends Tile with MemoryOpConsta
   outPacket.sender.y := UInt(conf.tile.y, width = 4)
   outPacket.sender.x := UInt(conf.tile.x, width = 4)
 
+  outPacket.header.writeReq := unit.io.mem.req.bits.fcn
+
+  outPacket.payload := unit.io.mem.req.bits.data
+  outPacket.header.address := unit.io.mem.req.bits.addr
+
+  localPort.in.valid := unit.io.mem.req.valid
+  localPort.in.bits.assign(outPacket)
+
+  // Set the destination of the packet, based on the kind of memory-request
   when (isImemRequest) {
     outPacket.dest.y := UInt(conf.imem.y, width = 4)
     outPacket.dest.x := UInt(conf.imem.x, width = 4)
   }.elsewhen (isDmemRequest) {
+    // Read request
     when (unit.io.mem.req.bits.fcn === M_XRD) {
       waitingForDmemReg := Bool(true)
     }
+    // Tile location read request
+    when (unit.io.mem.req.bits.fcn === M_XRD && unit.io.mem.req.bits.addr === UInt(0x1)) {
+      waitingForDmemReg := Bool(true)
+      readingTileLocReg := Bool(true)
+      // Don't send this packet off-tile
+      localPort.in.valid := Bool(false)
+    }
+    // Write request
     when (unit.io.mem.req.bits.fcn === M_XWR) {
       writeValidDmemReg := Bool(true)
     }
@@ -74,15 +100,16 @@ class SodorTile(implicit conf: SodorTileConfig) extends Tile with MemoryOpConsta
     when (localPort.out.valid) {
       waitingForDmemReg := Bool(false)
     }
+    when (readingTileLocReg) {
+      readingTileLocReg := Bool(false)
+      waitingForDmemReg := Bool(false)
+
+      unit.io.mem.resp.valid := Bool(true)
+      unit.io.mem.resp.bits.addr := UInt(0x1)
+      unit.io.mem.resp.bits.data := tileLocReg
+    }
   }.otherwise {
     unit.io.mem.req.ready := localPort.in.ready
   }
 
-  outPacket.header.writeReq := unit.io.mem.req.bits.fcn
-
-  outPacket.payload := unit.io.mem.req.bits.data
-  outPacket.header.address := unit.io.mem.req.bits.addr
-
-  localPort.in.valid := unit.io.mem.req.valid
-  localPort.in.bits.assign(outPacket)
 }

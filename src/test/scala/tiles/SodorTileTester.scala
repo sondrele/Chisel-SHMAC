@@ -8,6 +8,8 @@ class SodorTileTester(t: SodorTile) extends Tester(t) {
   import t.{localPort => local}
   import t.io.ports
 
+  val empty_packet = Array[BigInt](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
   def checkImemRequest(valid: Int,  addr: Int, imem_resp_ready: Int = 1): Unit = {
     expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
     expect(unit.io.mem.req.bits.fcn, 0)

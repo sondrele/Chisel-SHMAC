@@ -38,7 +38,8 @@ object TestMain {
       "RamTile",
       "RamTileSum",
       "SodorTile",
-      "SodorTileLoadStore"
+      "SodorTileLoadStore",
+      "SodorTileTileLoc"
     )
 
     val shmacTests = Array(
@@ -121,6 +122,9 @@ object TestMain {
       }
       case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile())) {
         t => new SodorTileLoadStoreTest(t)
+      }
+      case "SodorTileTileLoc" => chiselMainTest(args, () => Module(new SodorTile())) {
+        t => new SodorTileTileLocTest(t)
       }
       case "ShmacStoreImm" => chiselMainTest(args, () => Module(new Shmac())) {
         s => new ShmacStoreImmTest(s)
