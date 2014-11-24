@@ -3,7 +3,7 @@ import Sodor.SodorUnit
 import main.scala.memory.Ram
 import main.scala.router._
 import main.scala.shmac.Shmac
-import main.scala.tiles.{RamTileConfig, SodorTileConfig, SodorTile, RamTile}
+import main.scala.tiles._
 import memory.RamTest
 import router._
 import shmac._
@@ -68,7 +68,7 @@ object TestMain {
   def testModule(module: String, args: Array[String]): Unit = {
 
     implicit val ramTileConf = RamTileConfig()
-    implicit val sodorTileConf = SodorTileConfig((2, 1), (0, 1))
+    implicit val sodorTileConf = SodorTileConfig(TileLoc(2, 1), TileLoc(0, 1))
 
     module match {
       case "RouteComputation" => chiselMainTest(args, () => Module(new RouteComputation())) {
@@ -110,16 +110,16 @@ object TestMain {
       case "SodorLoadAddStore" => chiselMainTest(args, () => Module(new SodorUnit())) {
         t => new SodorLoadAddStoreTest(t)
       }
-      case "RamTile" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4))) {
+      case "RamTile" => chiselMainTest(args, () => Module(new RamTile(TileLoc(1, 1), 4))) {
         t => new RamTileTest(t)
       }
-      case "RamTileSum" => chiselMainTest(args, () => Module(new RamTile(1, 1, 4, 4))) {
+      case "RamTileSum" => chiselMainTest(args, () => Module(new RamTile(TileLoc(1, 1), 4))) {
         t => new RamTileSumTest(t)
       }
-      case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
+      case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(TileLoc(1, 1), 4))) {
         t => new SodorTileTest(t)
       }
-      case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
+      case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(TileLoc(1, 1), 4))) {
         t => new SodorTileLoadStoreTest(t)
       }
       case "ShmacStoreImm" => chiselMainTest(args, () => Module(new Shmac())) {

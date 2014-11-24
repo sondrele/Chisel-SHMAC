@@ -2,21 +2,22 @@ package main.scala.tiles
 
 import Chisel._
 import main.scala.memory.Ram
-import main.scala.router.{Packet, Router, RouterIO}
+import main.scala.router.{Local, Packet, Router, RouterIO}
 
 case class RamTileConfig(memDepth: Int = 0x4000)
 
 class RamTileIO(numPorts: Int) extends RouterIO(numPorts)
 
-class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: RamTileConfig) extends Module {
-  val io = new RamTileIO(numPorts)
+class RamTile(location: TileLoc, numRecords: Int)(implicit conf: RamTileConfig) extends Module {
+  val numIOPorts = 4
+  val io = new RamTileIO(numIOPorts)
 
-  val router = Module(new Router(x, y, numPorts + 1, numRecords)).io
-  for (i <- 0 until numPorts) {
+  val router = Module(new Router(location.x, location.y, numIOPorts + 1, numRecords)).io
+  for (i <- 0 until numIOPorts) {
     io.ports(i) <> router.ports(i)
   }
 
-  val localPort = router.ports(numPorts)
+  val localPort = router.ports(Local.index)
   val packet = localPort.out.bits
   val address = packet.header.address
   val payload = packet.payload

@@ -2,22 +2,22 @@ package main.scala.tiles
 
 import Chisel._
 import Common.{MemoryOpConstants, HTIFIO, SodorConfiguration}
-import main.scala.router.{Packet, Router, RouterIO}
+import main.scala.router.{Local, Packet, Router, RouterIO}
 import Sodor._
 
-case class SodorTileConfig(imem: (Int, Int), dmem: (Int, Int))
+case class SodorTileConfig(imem: TileLoc, dmem: TileLoc)
 
 class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
   implicit val sodorConf = SodorConfiguration()
   val host = new HTIFIO()
 }
 
-class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: SodorTileConfig) extends Module with MemoryOpConstants {
+class SodorTile(location: TileLoc, numRecords: Int)(implicit conf: SodorTileConfig) extends Module with MemoryOpConstants {
+  val numIOPorts = 4
+  val io = new SodorTileIO(numIOPorts)
 
-  val io = new SodorTileIO(numPorts)
-
-  val router = Module(new Router(x, y, numPorts + 1, numRecords)).io
-  for (i <- 0 until numPorts) {
+  val router = Module(new Router(location.x, location.y, numIOPorts + 1, numRecords)).io
+  for (i <- 0 until numIOPorts) {
     io.ports(i) <> router.ports(i)
   }
 
@@ -32,7 +32,7 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: S
     unit.io.mem.req.valid && unit.io.mem.req.bits.typ === MT_W
   }
 
-  val localPort = router.ports(numPorts)
+  val localPort = router.ports(Local.index)
   val packet = localPort.out.bits
   val address = packet.header.address
   val payload = packet.payload
@@ -47,12 +47,12 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: S
   unit.io.mem.resp.bits.data := payload
 
   val outPacket = new Packet()
-  outPacket.sender.y := UInt(y, width = 4)
-  outPacket.sender.x := UInt(x, width = 4)
+  outPacket.sender.y := UInt(location.y, width = 4)
+  outPacket.sender.x := UInt(location.x, width = 4)
 
   when (isImemRequest) {
-    outPacket.dest.y := UInt(conf.imem._2, width = 4)
-    outPacket.dest.x := UInt(conf.imem._1, width = 4)
+    outPacket.dest.y := UInt(conf.imem.y, width = 4)
+    outPacket.dest.x := UInt(conf.imem.x, width = 4)
   }.elsewhen (isDmemRequest) {
     when (unit.io.mem.req.bits.fcn === M_XRD) {
       waitingForDmemReg := Bool(true)
@@ -60,8 +60,8 @@ class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: S
     when (unit.io.mem.req.bits.fcn === M_XWR) {
       writeValidDmemReg := Bool(true)
     }
-    outPacket.dest.y := UInt(conf.dmem._2, width = 4)
-    outPacket.dest.x := UInt(conf.dmem._1, width = 4)
+    outPacket.dest.y := UInt(conf.dmem.y, width = 4)
+    outPacket.dest.x := UInt(conf.dmem.x, width = 4)
   }.otherwise {
     outPacket.dest.y := UInt(0, width = 4)
     outPacket.dest.x := UInt(0, width = 4)
