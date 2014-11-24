@@ -2,7 +2,7 @@ package shmac
 
 import main.scala.shmac.Shmac
 
-class ShmacBranchTest(s: Shmac) extends ShmacTester(s) {
+class ShmacBranchNotTakenTest(s: Shmac) extends ShmacTester(s) {
 
   // Stop processor while memory is filled with instructions
   poke(s.io.host.reset, 1)
@@ -13,8 +13,8 @@ class ShmacBranchTest(s: Shmac) extends ShmacTester(s) {
   // SB-type     rs2           rs1           BNE           imm[4:1]     imm[11]      Branch
   val br_ab    = (0x3 << 20) | (0x2 << 15) | (0x1 << 12) | (0xc << 7) | (0x0 << 6) | 0x63
   //             Address        Width         rd            LD
-  val ld_c     = (0x8 << 20) | (0x2 << 12) | (0x4 << 7) | 0x03 // 0x200c
-  val ld_d     = (0xc << 20) | (0x2 << 12) | (0x5 << 7) | 0x03 // 0x2010
+  val ld_c     = (0x8 << 20) | (0x2 << 12) | (0x2 << 7) | 0x03 // 0x200c
+  val ld_d     = (0xc << 20) | (0x2 << 12) | (0x3 << 7) | 0x03 // 0x2010
   //             Function      rs2           rs1           rd           ADD
   val add      = (0x0 << 25) | (0x3 << 20) | (0x2 << 15) | (0x4 << 7) | 0x33 // 0x2014
   //             rs2           Base          Function      Addr          SW
@@ -23,7 +23,7 @@ class ShmacBranchTest(s: Shmac) extends ShmacTester(s) {
   // Write the instructions to ram
   loadProgram(Array(ld_a, ld_b, br_ab, ld_c, ld_d, add, sw))
 
-  loadData(Array((0x0, 0xa), (0x4, 0xb), (0x8, 0xc), (0xc, 0xd)))
+  loadData(Array((0x0, 0xa), (0x4, 0xa), (0x8, 0xc), (0xc, 0xd)))
 
   // Start the processor, it will start fetching instructions
   poke(s.io.host.reset, 0)
@@ -55,27 +55,36 @@ class ShmacBranchTest(s: Shmac) extends ShmacTester(s) {
 
   step(3)
 
-  // The processor is getting "ready" to issue the next instruction, but the
-  // branch is taken so this imem request is not yet valid
-  checkImemRequest(0x200c, 0)
+  // The branch is not taken
+  checkImemRequest(0x200c, 1)
 
-  step(1)
+  step(9)
 
-  // The calculation of the branch address is finished, skipped two instructions
+  checkDmemRequest(0x8, 0x0, 1, 0)
+
+  step(9)
+
+  checkImemRequest(0x2010, 1)
+
+  step(9)
+
+  checkDmemRequest(0xc, 0x0, 1, 0)
+
+  step(9)
+
   checkImemRequest(0x2014, 1)
 
   step(9)
 
-  // Requesting sw-instruction
   checkImemRequest(0x2018, 1)
 
   step(9)
 
   // Writing add-result to memory
-  checkDmemRequest(0x10, 0xa + 0xb, 1)
+  checkDmemRequest(0x10, 0xc + 0xd, 1)
 
   step(4)
 
   // Integration test over, verify that it was working successfully
-  verifyRamData(0x10, 0xa + 0xb)
+  verifyRamData(0x10, 0xc + 0xd)
 }
