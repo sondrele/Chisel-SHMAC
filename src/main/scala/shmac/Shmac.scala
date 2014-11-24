@@ -11,11 +11,11 @@ class Shmac extends Module {
   }
 
   implicit val sodorConf = SodorTileConfig(imem = TileLoc(1, 0), dmem = TileLoc(1, 0))
-  val proc = Module(new SodorTile(TileLoc(0, 0), 4))
+  val proc = Module(new SodorTile(TileLoc(0, 0)))
   proc.io.host <> io.host
 
   implicit val ramConf = RamTileConfig()
-  val ram = Module(new RamTile(TileLoc(1, 0), 4))
+  val ram = Module(new RamTile(TileLoc(1, 0)))
 
   // +----+----+
   // |Proc|Ram |

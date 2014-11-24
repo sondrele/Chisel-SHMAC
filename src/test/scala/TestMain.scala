@@ -110,16 +110,16 @@ object TestMain {
       case "SodorLoadAddStore" => chiselMainTest(args, () => Module(new SodorUnit())) {
         t => new SodorLoadAddStoreTest(t)
       }
-      case "RamTile" => chiselMainTest(args, () => Module(new RamTile(TileLoc(1, 1), 4))) {
+      case "RamTile" => chiselMainTest(args, () => Module(new RamTile(TileLoc(1, 1)))) {
         t => new RamTileTest(t)
       }
-      case "RamTileSum" => chiselMainTest(args, () => Module(new RamTile(TileLoc(1, 1), 4))) {
+      case "RamTileSum" => chiselMainTest(args, () => Module(new RamTile(TileLoc(1, 1)))) {
         t => new RamTileSumTest(t)
       }
-      case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(TileLoc(1, 1), 4))) {
+      case "SodorTile" => chiselMainTest(args, () => Module(new SodorTile(TileLoc(1, 1)))) {
         t => new SodorTileTest(t)
       }
-      case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(TileLoc(1, 1), 4))) {
+      case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(TileLoc(1, 1)))) {
         t => new SodorTileLoadStoreTest(t)
       }
       case "ShmacStoreImm" => chiselMainTest(args, () => Module(new Shmac())) {

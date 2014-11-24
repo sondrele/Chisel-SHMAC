@@ -5,18 +5,18 @@ import Common.{MemoryOpConstants, HTIFIO, SodorConfiguration}
 import main.scala.router.{Local, Packet, Router, RouterIO}
 import Sodor._
 
-case class SodorTileConfig(imem: TileLoc, dmem: TileLoc)
+case class SodorTileConfig(imem: TileLoc, dmem: TileLoc, fifoSize: Int = 4)
 
 class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
   implicit val sodorConf = SodorConfiguration()
   val host = new HTIFIO()
 }
 
-class SodorTile(location: TileLoc, numRecords: Int)(implicit conf: SodorTileConfig) extends Module with MemoryOpConstants {
+class SodorTile(tile: TileLoc)(implicit conf: SodorTileConfig) extends Module with MemoryOpConstants {
   val numIOPorts = 4
   val io = new SodorTileIO(numIOPorts)
 
-  val router = Module(new Router(location.x, location.y, numIOPorts + 1, numRecords)).io
+  val router = Module(new Router(tile.x, tile.y, numIOPorts + 1, conf.fifoSize)).io
   for (i <- 0 until numIOPorts) {
     io.ports(i) <> router.ports(i)
   }
@@ -47,8 +47,8 @@ class SodorTile(location: TileLoc, numRecords: Int)(implicit conf: SodorTileConf
   unit.io.mem.resp.bits.data := payload
 
   val outPacket = new Packet()
-  outPacket.sender.y := UInt(location.y, width = 4)
-  outPacket.sender.x := UInt(location.x, width = 4)
+  outPacket.sender.y := UInt(tile.y, width = 4)
+  outPacket.sender.x := UInt(tile.x, width = 4)
 
   when (isImemRequest) {
     outPacket.dest.y := UInt(conf.imem.y, width = 4)
