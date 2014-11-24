@@ -6,6 +6,7 @@ import main.scala.shmac.Shmac
 import main.scala.tiles.{SodorTileConf, SodorTile, RamTile}
 import memory.RamTest
 import router._
+import shmac._
 import sodor._
 import tiles._
 
@@ -41,7 +42,8 @@ object TestMain {
     )
 
     val shmacTests = Array(
-      "Shmac"
+      "ShmacStoreImm",
+      "ShmacLoadAddStore"
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests ++ shmacTests
@@ -113,8 +115,11 @@ object TestMain {
     case "SodorTileLoadStore" => chiselMainTest(args, () => Module(new SodorTile(1, 1, 4, 4))) {
       t => new SodorTileLoadStoreTest(t)
     }
-    case "Shmac" => chiselMainTest(args, () => Module(new Shmac())) {
+    case "ShmacStoreImm" => chiselMainTest(args, () => Module(new Shmac())) {
       s => new ShmacStoreImmTest(s)
+    }
+    case "ShmacLoadAddStore" => chiselMainTest(args, () => Module(new Shmac())) {
+      s => new ShmacLoadAddStoreTest(s)
     }
     case other => sys.error(s"No module with name $other")
   }

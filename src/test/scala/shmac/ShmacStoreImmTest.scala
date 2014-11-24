@@ -1,6 +1,7 @@
+package shmac
+
 import main.scala.router.East
 import main.scala.shmac.Shmac
-import shmac.ShmacTester
 
 class ShmacStoreImmTest(s: Shmac) extends ShmacTester(s) {
 
