@@ -4,9 +4,11 @@ import Chisel._
 import main.scala.memory.Ram
 import main.scala.router.{Packet, Router, RouterIO}
 
+case class RamTileConfig(memDepth: Int = 0x4000)
+
 class RamTileIO(numPorts: Int) extends RouterIO(numPorts)
 
-class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) extends Module {
+class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: RamTileConfig) extends Module {
   val io = new RamTileIO(numPorts)
 
   val router = Module(new Router(x, y, numPorts + 1, numRecords)).io
@@ -21,7 +23,7 @@ class RamTile(x: Int, y: Int, numPorts: Int, numRecords: Int, memDepth: Int) ext
   val isWrite = packet.header.writeReq
   val isRead = !isWrite
 
-  val ram = Module(new Ram(depth = memDepth, dataWidth = Packet.DATA_WIDTH)).io
+  val ram = Module(new Ram(depth = conf.memDepth, dataWidth = Packet.DATA_WIDTH)).io
 
   ram.reads.valid := localPort.out.valid && isRead
   ram.reads.bits.address := address

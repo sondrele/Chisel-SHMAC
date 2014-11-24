@@ -5,14 +5,14 @@ import Common.{MemoryOpConstants, HTIFIO, SodorConfiguration}
 import main.scala.router.{Packet, Router, RouterIO}
 import Sodor._
 
-case class SodorTileConf(imem: (Int, Int), dmem: (Int, Int))
+case class SodorTileConfig(imem: (Int, Int), dmem: (Int, Int))
 
 class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
   implicit val sodorConf = SodorConfiguration()
   val host = new HTIFIO()
 }
 
-class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: SodorTileConf) extends Module with MemoryOpConstants {
+class SodorTile(x: Int, y: Int, numPorts: Int, numRecords: Int)(implicit conf: SodorTileConfig) extends Module with MemoryOpConstants {
 
   val io = new SodorTileIO(numPorts)
 
