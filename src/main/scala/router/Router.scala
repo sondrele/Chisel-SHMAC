@@ -1,13 +1,8 @@
 package main.scala.router
 
 import Chisel._
+import main.scala.tiles.TileLoc
 
-// in.valid  -> Request to write into router
-// in.bits   -> Data to write
-// in.ready  <- True if input port is not full
-// out.valid <- Router requesting to send data
-// out.bits  <- Data to send
-// out.ready -> True to request output to send data
 class RouterPortIO extends Bundle {
   val in = Decoupled(new Packet()).flip()
   val out = Decoupled(new Packet())
@@ -17,9 +12,9 @@ class RouterIO(numPorts: Int) extends Bundle {
   val ports = Vec.fill(numPorts) { new RouterPortIO() }
 }
 
-class Router(x: Int, y: Int, numPorts: Int, numRecords: Int) extends Module {
-  val tileX = UInt(x, width = 4)
-  val tileY = UInt(y, width = 4)
+class Router(tile: TileLoc, numPorts: Int, numRecords: Int) extends Module {
+  val tileX = UInt(tile.x, width = 4)
+  val tileY = UInt(tile.y, width = 4)
 
   val io = new RouterIO(numPorts)
 

@@ -14,7 +14,7 @@ class EmptyTile(implicit conf: EmptyTileConfig) extends Module {
   val numPorts = 4
   val io: TileIO = new TileIO(numPorts)
 
-  val router = Module(new Router(conf.tile.x, conf.tile.y, numPorts, conf.fifoSize)).io
+  val router = Module(new Router(conf.tile, numPorts, conf.fifoSize)).io
   for (i <- 0 until numPorts) {
     io.ports(i) <> router.ports(i)
   }

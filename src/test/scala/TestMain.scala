@@ -92,7 +92,7 @@ object TestMain {
       case "DirectionRouter" => chiselMainTest(args, () => Module(new DirectionRouter(UInt(1), UInt(1), 4))) {
         b => new DirectionRouterTest(b)
       }
-      case "Router" => chiselMainTest(args, () => Module(new Router(1, 1, 5, 4))) {
+      case "Router" => chiselMainTest(args, () => Module(new Router(TileLoc(1, 1), 5, 4))) {
         b => new RouterTest(b)
       }
       case "Ram" => chiselMainTest(args, () => Module(new Ram(depth = 8, dataWidth = 32))) {

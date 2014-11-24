@@ -16,7 +16,7 @@ class SodorTile(implicit conf: SodorTileConfig) extends Module with MemoryOpCons
   val numIOPorts = 4
   val io = new SodorTileIO(numIOPorts)
 
-  val router = Module(new Router(conf.tile.x, conf.tile.y, numIOPorts + 1, conf.fifoSize)).io
+  val router = Module(new Router(conf.tile, numIOPorts + 1, conf.fifoSize)).io
   for (i <- 0 until numIOPorts) {
     io.ports(i) <> router.ports(i)
   }
