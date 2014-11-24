@@ -2,22 +2,21 @@ package main.scala.tiles
 
 import Chisel._
 import Common.{MemoryOpConstants, HTIFIO, SodorConfiguration}
-import main.scala.router.{Local, Packet, Router, RouterIO}
+import main.scala.router.{Local, Packet, Router}
 import Sodor._
 
-case class SodorTileConfig(tile: TileLoc, imem: TileLoc, dmem: TileLoc, fifoSize: Int = 4)
+case class SodorTileConfig(tile: TileLoc, imem: TileLoc, dmem: TileLoc) extends TileConfig
 
-class SodorTileIO(numPorts: Int) extends RouterIO(numPorts) {
+class SodorTileIO(numPorts: Int) extends TileIO(numPorts) {
   implicit val sodorConf = SodorConfiguration()
   val host = new HTIFIO()
 }
 
-class SodorTile(implicit conf: SodorTileConfig) extends Module with MemoryOpConstants {
-  val numIOPorts = 4
-  val io = new SodorTileIO(numIOPorts)
+class SodorTile(implicit conf: SodorTileConfig) extends Tile with MemoryOpConstants {
+  val io = new SodorTileIO(conf.ioPorts)
 
-  val router = Module(new Router(conf.tile, numIOPorts + 1, conf.fifoSize)).io
-  for (i <- 0 until numIOPorts) {
+  val router = Module(new Router(conf.tile, conf.ioPorts + 1, conf.fifoSize)).io
+  for (i <- 0 until conf.ioPorts) {
     io.ports(i) <> router.ports(i)
   }
 

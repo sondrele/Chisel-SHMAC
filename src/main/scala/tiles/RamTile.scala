@@ -2,18 +2,17 @@ package main.scala.tiles
 
 import Chisel._
 import main.scala.memory.Ram
-import main.scala.router.{Local, Packet, Router, RouterIO}
+import main.scala.router.{Local, Packet, Router}
 
-case class RamTileConfig(tile: TileLoc, memDepth: Int = 0x4000, fifoSize: Int = 4)
+case class RamTileConfig(tile: TileLoc, memDepth: Int = 0x4000) extends TileConfig
 
-class RamTileIO(numPorts: Int) extends RouterIO(numPorts)
+class RamTileIO(numPorts: Int) extends TileIO(numPorts)
 
-class RamTile(implicit conf: RamTileConfig) extends Module {
-  val numIOPorts = 4
-  val io = new RamTileIO(numIOPorts)
+class RamTile(implicit conf: RamTileConfig) extends Tile {
+  val io = new RamTileIO(conf.ioPorts)
 
-  val router = Module(new Router(conf.tile, numIOPorts + 1, conf.fifoSize)).io
-  for (i <- 0 until numIOPorts) {
+  val router = Module(new Router(conf.tile, conf.ioPorts + 1, conf.fifoSize)).io
+  for (i <- 0 until conf.ioPorts) {
     io.ports(i) <> router.ports(i)
   }
 

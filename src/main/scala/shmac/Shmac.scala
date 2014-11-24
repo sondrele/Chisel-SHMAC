@@ -5,6 +5,8 @@ import Common.HTIFIO
 import main.scala.router.{West, East}
 import main.scala.tiles._
 
+case class ShmacConfig(tileConfigs: Array[TileConfig])
+
 class Shmac extends Module {
   val io = new Bundle {
     val host = new HTIFIO()
