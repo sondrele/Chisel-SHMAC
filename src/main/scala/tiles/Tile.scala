@@ -14,7 +14,9 @@ trait TileConfig {
 
 class TileIO(numPorts: Int) extends RouterIO(numPorts)
 
-abstract class Tile(implicit conf: TileConfig) extends Module
+abstract class Tile(implicit conf: TileConfig) extends Module {
+  val io: TileIO
+}
 
 case class EmptyTileConfig(tile: TileLoc) extends TileConfig
 
