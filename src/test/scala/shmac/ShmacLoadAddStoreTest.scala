@@ -1,5 +1,6 @@
 package shmac
 
+import main.scala.router.East
 import main.scala.shmac.Shmac
 
 class ShmacLoadAddStoreTest(s: Shmac) extends ShmacTester(s) {
@@ -39,5 +40,83 @@ class ShmacLoadAddStoreTest(s: Shmac) extends ShmacTester(s) {
   // It takes four cycles from a packet is at the input port until the
   // respective response is at the output port
   checkPortReadResponse(0x2000, ld_a)
+
+  step(3)
+
+  // Two cycles for the packet to reach the processor, it issues a request for
+  // the next instruction on the next cycle
+  checkDmemRequest(0x120, 0x0, 1, 0)
+
+  step(2)
+
+  checkPortReadRequest(0x120)
+
+  step(4)
+
+  checkPortReadResponse(0x120, 0xdead)
+
+  step(3)
+
+  checkImemRequest(0x2004, 1)
+
+  step(2)
+
+  checkPortReadRequest(0x2004)
+
+  step(4)
+
+  checkPortReadResponse(0x2004, ld_b)
+
+  step(3)
+
+  checkDmemRequest(0x124, 0x0, 1, 0)
+
+  step(2)
+
+  checkPortReadRequest(0x124)
+
+  step(4)
+
+  checkPortReadResponse(0x124, 0xbeef)
+
+  step(3)
+
+  checkImemRequest(0x2008, 1)
+
+  step(6)
+
+  checkPortReadResponse(0x2008, add_ab)
+
+  step(3)
+
+  checkImemRequest(0x200c, 1)
+
+  step(6)
+
+  checkPortReadResponse(0x200c, sw_ab)
+
+  step(3)
+
+  checkDmemRequest(0xf, 0xdead + 0xbeef, 1)
+
+  step(4)
+
+  // Integration test over, verify that it was working successfully
+  // Issue a simple read to the RamTile after the store-request from the processor
+  poke(s.ram.io.ports(East.index).in.valid, 1)
+  poke(s.ram.io.ports(East.index).in.bits, readData(0xf))
+
+  step(1)
+
+  poke(s.ram.io.ports(East.index).in.valid, 0)
+  poke(s.ram.io.ports(East.index).in.bits, emptyPacket)
+
+  step(3)
+
+  // Verify that the data was successfully written to ram
+  expect(s.ram.io.ports(East.index).out.valid, 1)
+  expect(s.ram.io.ports(East.index).out.bits.header.address, 0xf)
+  expect(s.ram.io.ports(East.index).out.bits.payload, 0xdead + 0xbeef)
+
 
 }
