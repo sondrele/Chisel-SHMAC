@@ -18,11 +18,11 @@ class ShmacStoreImmTest(s: Shmac) extends ShmacTester(s) {
   // Start the processor, it will start fetching instructions
   poke(s.io.host.reset, 0)
 
-  checkImemRequest(1, 0x2000)
+  checkImemRequest(0x2000, 1)
 
   step(1)
 
-  checkImemRequest(0, 0x2004)
+  checkImemRequest(0x2004, 0)
 
   step(1)
 
@@ -33,13 +33,13 @@ class ShmacStoreImmTest(s: Shmac) extends ShmacTester(s) {
 
   // It takes four cycles from a packet is at the input port until the
   // respective response is at the output port
-  checkPortReadResponse(ld_a, 0x2000)
+  checkPortReadResponse(0x2000, ld_a)
 
   step(3)
 
   // Two cycles for the packet to reach the processor, it issues a request for
   // the next instruction on the next cycle
-  checkImemRequest(1, 0x2004)
+  checkImemRequest(0x2004, 1)
 
   step(2)
 
@@ -47,19 +47,19 @@ class ShmacStoreImmTest(s: Shmac) extends ShmacTester(s) {
 
   step(4)
 
-  checkPortReadResponse(sw_a, 0x2004)
+  checkPortReadResponse(0x2004, sw_a)
 
   step(3)
 
-  checkDmemRequest(1, 0xa, 0x1000, fcn = 1)
+  checkDmemRequest(0xa, 0x1000, 1, fcn = 1)
 
   step(1)
 
-  checkImemRequest(1, 0x2008)
+  checkImemRequest(0x2008, 1)
 
   step(1)
 
-  checkPortStoreRequest(0x1000, 0xa)
+  checkPortStoreRequest(0xa, 0x1000)
 
   step(1)
 

@@ -7,7 +7,7 @@ import main.scala.shmac.Shmac
 class ShmacTester(s: Shmac) extends Tester(s) {
   import s.proc.unit
 
-  def checkImemRequest(valid: Int,  addr: Int, imem_resp_ready: Int = 1): Unit = {
+  def checkImemRequest(addr: Int, valid: Int, imem_resp_ready: Int = 1): Unit = {
     expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
     expect(unit.io.mem.req.bits.fcn, 0)
     expect(unit.io.mem.req.bits.typ, 7)
@@ -23,7 +23,7 @@ class ShmacTester(s: Shmac) extends Tester(s) {
     expect(unit.core.io.dmem.resp.ready, 0)
   }
 
-  def checkDmemRequest(valid: Int, addr: Int, data: Int, fcn: Int = 1): Unit = {
+  def checkDmemRequest(addr: Int, data: Int, valid: Int, fcn: Int = 1): Unit = {
     expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
     expect(unit.io.mem.req.bits.fcn, fcn)
     expect(unit.io.mem.req.bits.typ, 3)
@@ -48,7 +48,7 @@ class ShmacTester(s: Shmac) extends Tester(s) {
     expect(s.ram.io.ports(West.index).in.bits, ramReadRequest(addr))
   }
 
-  def checkPortStoreRequest(payload: Int, addr: Int): Unit = {
+  def checkPortStoreRequest(addr: Int, payload: Int): Unit = {
     expect(s.proc.io.ports(East.index).out.valid, 1)
     expect(s.proc.io.ports(East.index).out.bits, ramStoreRequest(payload, addr))
 
@@ -56,7 +56,7 @@ class ShmacTester(s: Shmac) extends Tester(s) {
     expect(s.ram.io.ports(West.index).in.bits, ramStoreRequest(payload, addr))
   }
 
-  def checkPortReadResponse(payload: Int, addr: Int): Unit = {
+  def checkPortReadResponse(addr: Int, payload: Int): Unit = {
     expect(s.ram.io.ports(West.index).out.valid, 1)
     expect(s.ram.io.ports(West.index).out.bits, ramResponse(payload, addr))
 
@@ -92,21 +92,21 @@ class ShmacTester(s: Shmac) extends Tester(s) {
     0       // Dest y
   )
 
-  def ramResponse(instr: Int, addr: Int) = Array[BigInt](
+  def ramResponse(payload: Int, addr: Int) = Array[BigInt](
     addr,   // Header address
     1,      // Header reply
     0,      // Header writeReq
     0,      // Header writeMask
     0,      // Header exop
     0,      // Header error
-    instr,  // Payload
+    payload,  // Payload
     0,      // Sender x
     0,      // Sender y
     1,      // Dest x
     0       // Dest y
   )
 
-  def writeInstruction(instr: Int, addr: Int) = Array[BigInt](
+  def writeData(addr: Int, instr: Int) = Array[BigInt](
     addr,   // Header address
     0,      // Header reply
     1,      // Header writeReq
@@ -137,12 +137,19 @@ class ShmacTester(s: Shmac) extends Tester(s) {
   val emptyPacket = Array[BigInt](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
   def loadProgram(instructions: Array[Int]): Unit = {
-    for (i <- 0 until instructions.length) {
-      poke(s.ram.io.ports(East.index).in.valid, 1)
-      poke(s.ram.io.ports(East.index).in.bits, writeInstruction(instructions(i), 0x2000 + i * 4))
-      step(1)
+    val data = instructions.zipWithIndex.map {
+      case (instr, index) => (0x2000 + index * 4, instr)
     }
+    loadData(data)
+  }
 
+  def loadData(data: Array[(Int, Int)]): Unit = {
+    data.foreach {
+      case (addr, payload) =>
+        poke(s.ram.io.ports(East.index).in.valid, 1)
+        poke(s.ram.io.ports(East.index).in.bits, writeData(addr, payload))
+        step(1)
+    }
     poke(s.ram.io.ports(East.index).in.valid, 0)
     poke(s.ram.io.ports(East.index).in.bits, emptyPacket)
     step(2)
