@@ -22,6 +22,20 @@ class ShmacStoreImmTest(s: Shmac) extends Tester(s) {
     0       // Dest y
   )
 
+  def readData(addr: Int, payload: Int = 0) = Array[BigInt](
+    addr,   // Header address
+    0,      // Header reply
+    0,      // Header writeReq
+    0,      // Header writeMask
+    0,      // Header exop
+    0,      // Header error
+    payload,// Payload
+    2,      // Sender x
+    0,      // Sender y
+    1,      // Dest x
+    0       // Dest y
+  )
+
   def ramResponse(instr: Int, addr: Int) = Array[BigInt](
     addr,   // Header address
     1,      // Header reply
@@ -50,6 +64,20 @@ class ShmacStoreImmTest(s: Shmac) extends Tester(s) {
     0       // Dest y
   )
 
+  def ramStoreRequest(payload: Int, addr: Int) = Array[BigInt](
+    addr,   // Header address
+    0,      // Header reply
+    1,      // Header writeReq
+    0,      // Header writeMask
+    0,      // Header exop
+    0,      // Header error
+    payload,// Payload
+    0,      // Sender x
+    0,      // Sender y
+    1,      // Dest x
+    0       // Dest y
+  )
+
 
   def checkImemRequest(valid: Int,  addr: Int, imem_resp_ready: Int = 1): Unit = {
     expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
@@ -65,6 +93,23 @@ class ShmacStoreImmTest(s: Shmac) extends Tester(s) {
     expect(unit.core.io.imem.req.bits.addr, addr)
     // Verify that there is no dmem request
     expect(unit.core.io.dmem.resp.ready, 0)
+  }
+
+  def checkDmemRequest(valid: Int, addr: Int, data: Int, fcn: Int = 1): Unit = {
+    expect(unit.io.mem.req.valid, valid) // Gets valid after req.ready is set
+    expect(unit.io.mem.req.bits.fcn, fcn)
+    expect(unit.io.mem.req.bits.typ, 3)
+    expect(unit.io.mem.req.bits.addr, addr)
+    expect(unit.io.mem.req.bits.data, data)
+    expect(unit.io.mem.resp.ready, 1)
+    // Verify that there is no imem request
+    expect(unit.core.io.imem.resp.ready, 0)
+    // Verify that the same signals is set for dmem
+    expect(unit.core.io.dmem.req.valid, valid)
+    expect(unit.core.io.dmem.req.bits.fcn, fcn)
+    expect(unit.core.io.dmem.req.bits.typ, 3)
+    expect(unit.core.io.dmem.req.bits.addr, addr)
+    expect(unit.io.mem.req.bits.data, data)
   }
 
   def peekArbiter(): Unit = {
@@ -170,4 +215,35 @@ class ShmacStoreImmTest(s: Shmac) extends Tester(s) {
   expect(s.proc.io.ports(East.index).in.bits, ramResponse(sw_a, 0x2004))
 
   step(3)
+
+  checkDmemRequest(1, 0xa, 0x1000, fcn = 1)
+
+  step(1)
+
+  checkImemRequest(1, 0x2008)
+
+  step(1)
+
+  expect(s.proc.io.ports(East.index).out.valid, 1)
+  expect(s.proc.io.ports(East.index).out.bits, ramStoreRequest(0x1000, 0xa))
+
+  expect(s.ram.io.ports(West.index).in.ready, 1)
+  expect(s.ram.io.ports(West.index).in.bits, ramStoreRequest(0x1000, 0xa))
+
+  step(1)
+
+  poke(s.ram.io.ports(East.index).in.valid, 1)
+  poke(s.ram.io.ports(East.index).in.bits, readData(0xa))
+
+  step(1)
+
+  poke(s.ram.io.ports(East.index).in.valid, 0)
+  poke(s.ram.io.ports(East.index).in.bits, emptyPacket)
+
+  step(3)
+
+  expect(s.ram.io.ports(East.index).out.valid, 1)
+  expect(s.ram.io.ports(East.index).out.bits.header.address, 0xa)
+  expect(s.ram.io.ports(East.index).out.bits.payload, 0x1000)
+
 }
