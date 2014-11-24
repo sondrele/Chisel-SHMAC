@@ -155,4 +155,45 @@ class ShmacTester(s: Shmac) extends Tester(s) {
     step(2)
   }
 
+  def verifyRamData(addr: Int, data: Int) {
+    poke(s.ram.io.ports(East.index).in.valid, 1)
+    poke(s.ram.io.ports(East.index).in.bits, readData(addr))
+
+    step(1)
+
+    poke(s.ram.io.ports(East.index).in.valid, 0)
+    poke(s.ram.io.ports(East.index).in.bits, emptyPacket)
+
+    step(3)
+
+    expect(s.ram.io.ports(East.index).out.valid, 1)
+    expect(s.ram.io.ports(East.index).out.bits.header.address, addr)
+    expect(s.ram.io.ports(East.index).out.bits.payload, data)
+
+  }
+
+  def peekArbiter(): Unit = {
+    println("#-----")
+    println("# Printing arbiter signals")
+    peek(unit.arbiter.io.mem)
+    peek(unit.arbiter.io.imem.req.ready)
+    peek(unit.arbiter.io.imem.req.valid)
+    peek(unit.arbiter.io.imem.req.bits.addr)
+    peek(unit.arbiter.io.imem.req.bits.fcn)
+    peek(unit.arbiter.io.imem.req.bits.typ)
+    peek(unit.arbiter.io.imem.resp.ready)
+    peek(unit.arbiter.io.imem.resp.valid)
+    peek(unit.arbiter.io.imem.resp.bits.data)
+    peek(unit.arbiter.io.dmem.req.ready)
+    peek(unit.arbiter.io.dmem.req.valid)
+    peek(unit.arbiter.io.dmem.req.bits.addr)
+    peek(unit.arbiter.io.dmem.req.bits.data)
+    peek(unit.arbiter.io.dmem.req.bits.fcn)
+    peek(unit.arbiter.io.dmem.req.bits.typ)
+    peek(unit.core.io.dmem.resp.ready)
+    peek(unit.arbiter.io.dmem.resp.valid)
+    peek(unit.arbiter.io.dmem.resp.bits.data)
+    println("#-----")
+  }
+
 }

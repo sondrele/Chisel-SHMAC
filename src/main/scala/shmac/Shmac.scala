@@ -14,7 +14,7 @@ class Shmac extends Module {
   val proc = Module(new SodorTile(0, 0, 4, 4))
   proc.io.host <> io.host
 
-  val ram = Module(new RamTile(1, 0, 4, 4, 256))
+  val ram = Module(new RamTile(1, 0, 4, 4, 0x4000))
 
   // +----+----+
   // |Proc|Ram |

@@ -65,20 +65,5 @@ class ShmacStoreImmTest(s: Shmac) extends ShmacTester(s) {
   step(1)
 
   // Integration test over, verify that it was working successfully
-  // Issue a simple read to the RamTile after the store-request from the processor
-  poke(s.ram.io.ports(East.index).in.valid, 1)
-  poke(s.ram.io.ports(East.index).in.bits, readData(0xa))
-
-  step(1)
-
-  poke(s.ram.io.ports(East.index).in.valid, 0)
-  poke(s.ram.io.ports(East.index).in.bits, emptyPacket)
-
-  step(3)
-
-  // Verify that the data was successfully written to ram
-  expect(s.ram.io.ports(East.index).out.valid, 1)
-  expect(s.ram.io.ports(East.index).out.bits.header.address, 0xa)
-  expect(s.ram.io.ports(East.index).out.bits.payload, 0x1000)
-
+  verifyRamData(0xa, 0x1000)
 }

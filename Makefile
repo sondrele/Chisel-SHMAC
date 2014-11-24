@@ -27,6 +27,9 @@ units:
 tiles:
 	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
 
+shmac:
+	$(SBT) "$(RUN) $@ $(TARGET) $(SW) $(TEST)"
+
 %.out:
 	$(SBT) "$(RUN) $(@:.out=) $(TARGET) $(SW) $(TEST)"
 
