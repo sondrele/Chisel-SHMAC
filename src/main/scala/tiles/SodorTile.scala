@@ -46,7 +46,7 @@ class SodorTile(implicit conf: SodorTileConfig) extends Tile with MemoryOpConsta
   // Used in combination with waitingForDmemReg. Makes it possible for the
   // processor to read its Tile-location
   val readingTileLocReg = Reg(Bool(), init = Bool(false))
-  val tileLocReg = Reg(UInt(), init = Cat(UInt(conf.tile.x), UInt(conf.tile.y)))
+  val tileLocReg = Reg(UInt(), init = Cat(UInt(conf.tile.y), UInt(conf.tile.x)))
 
   localPort.out.ready := unit.io.mem.resp.ready
   unit.io.mem.resp.valid := (localPort.out.valid && isResponse) || writeValidDmemReg
