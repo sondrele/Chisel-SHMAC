@@ -47,7 +47,8 @@ object TestMain {
       "ShmacLoadAddStore",
       "ShmacBranchTaken",
       "ShmacBranchNotTaken",
-      "ShmacBranchTileLoc"
+      "ShmacBranchTileLoc",
+      "Shmac2"
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests ++ shmacTests
@@ -141,6 +142,9 @@ object TestMain {
       }
       case "ShmacBranchTileLoc" => chiselMainTest(args, () => Module(new Shmac())) {
         s => new ShmacBranchTileLocTest(s)
+      }
+      case "Shmac2" => chiselMainTest(args, () => Module(new Shmac2())) {
+        s => new Shmac2Test(s)
       }
       case other => sys.error(s"No module with name $other")
     }
