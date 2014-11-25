@@ -2,7 +2,7 @@ import Chisel._
 import Sodor.SodorUnit
 import main.scala.memory.Ram
 import main.scala.router._
-import main.scala.shmac.Shmac
+import main.scala.shmac.{Shmac2, Shmac}
 import main.scala.tiles._
 import memory.RamTest
 import router._
@@ -46,7 +46,8 @@ object TestMain {
       "ShmacStoreImm",
       "ShmacLoadAddStore",
       "ShmacBranchTaken",
-      "ShmacBranchNotTaken"
+      "ShmacBranchNotTaken",
+      "ShmacBranchTileLoc"
     )
 
     val allTests = routerTests ++ unitTests ++ tileTests ++ shmacTests
@@ -137,6 +138,9 @@ object TestMain {
       }
       case "ShmacBranchNotTaken" => chiselMainTest(args, () => Module(new Shmac())) {
         s => new ShmacBranchNotTakenTest(s)
+      }
+      case "ShmacBranchTileLoc" => chiselMainTest(args, () => Module(new Shmac())) {
+        s => new ShmacBranchTileLocTest(s)
       }
       case other => sys.error(s"No module with name $other")
     }
