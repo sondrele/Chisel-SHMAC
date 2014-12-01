@@ -6,14 +6,14 @@ import main.scala.router.Packet
 class PacketTestModule extends Module {
   val io = new Bundle() {
     val packet = new Packet().asInput
-    val ySender = UInt(OUTPUT, width = 4)
-    val xSender = UInt(OUTPUT, width = 4)
-    val yDest = UInt(OUTPUT, width = 4)
-    val xDest = UInt(OUTPUT, width = 4)
+    val ySender = UInt(OUTPUT, width = Packet.PACKET_DIR_WIDTH)
+    val xSender = UInt(OUTPUT, width = Packet.PACKET_DIR_WIDTH)
+    val yDest = UInt(OUTPUT, width = Packet.PACKET_DIR_WIDTH)
+    val xDest = UInt(OUTPUT, width = Packet.PACKET_DIR_WIDTH)
     val payload = UInt(OUTPUT, width = Packet.DATA_WIDTH)
     val isError = Bool(OUTPUT)
     val isExop = Bool(OUTPUT)
-    val writeMask = UInt(OUTPUT, width = 16)
+    val writeMask = UInt(OUTPUT, width = Packet.WRITE_MASK_WIDTH)
     val isWriteReq = Bool(OUTPUT)
     val isReply = Bool(OUTPUT)
     val address = UInt(OUTPUT, width = Packet.ADDRESS_WIDTH)
@@ -35,6 +35,8 @@ class PacketTestModule extends Module {
 }
 
 class PacketTestModuleTest(m: PacketTestModule) extends Tester(m) {
+  expect(Packet.LENGTH == 88, "Packet has LENGTH = 88")
+
   def testXYDest() {
     poke(m.io.packet.dest.y, 15)
     poke(m.io.packet.dest.x, 8)
@@ -51,7 +53,7 @@ class PacketTestModuleTest(m: PacketTestModule) extends Tester(m) {
 
   def testPayload() {
     expect(m.io.payload, 0)
-    poke(m.io.packet.payload, (0x1<<31)-1)
+    poke(m.io.packet.payload, (0x1 << 31)-1)
     expect(m.io.payload, Int.MaxValue)
   }
 
@@ -69,8 +71,8 @@ class PacketTestModuleTest(m: PacketTestModule) extends Tester(m) {
 
   def testWriteMask() {
     expect(m.io.writeMask, 0)
-    poke(m.io.packet.header.writeMask, 2048)
-    expect(m.io.writeMask, 2048)
+    poke(m.io.packet.header.writeMask, 0xf)
+    expect(m.io.writeMask, 0xf)
   }
 
   def testWriteReq() {
