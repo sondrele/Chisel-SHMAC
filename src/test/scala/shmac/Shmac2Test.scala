@@ -114,27 +114,27 @@ class Shmac2Test(s: Shmac2) extends Tester(s) {
   // Stop processor while memory is filled with instructions
   poke(s.io.host.reset, 1)
 
-  //                                                                                                      //  P0       P1
-  //             Address       Width         rd            LD                                             //-------------------
-  val ld_loc   = (0x1 << 20) | (0x2 << 12) | (0x2 << 7) | 0x03                                            //| 0x2000 | 0x2000 |
-  //             imm[10:5]     rs2           rs1           BEQ           imm[4:1]     imm[11]      Branch //|        |        |
-  val br_loc   = (0x0 << 25) | (0x2 << 20) | (0x0 << 15) | (0x0 << 12) | (0x18 << 7) | (0x0 << 6) | 0x63  //| 0x2004 | 0x2004 |
-  //             Address        Width         rd            LD                                            //|        |        |
-  val ld_a     = (0x0 << 20) | (0x2 << 12) | (0x3 << 7) | 0x03                                            //|        | 0x2008 |
-  val ld_b     = (0x4 << 20) | (0x2 << 12) | (0x4 << 7) | 0x03                                            //|        | 0x200c |
-  //             Function      rs2           rs1           rd           ADD                               //|        |        |
-  val add_ab   = (0x0 << 25) | (0x4 << 20) | (0x3 << 15) | (0x5 << 7) | 0x33 // 0x2014                    //|        | 0x2010 |
-  //             rs2           Base          Function      Addr          SW                               //|        |        |
-  val sw_ab    = (0x5 << 20) | (0x0 << 15) | (0x2 << 12) | (0x10 << 7) | 0x23 // 0x2018                   //|        | 0x2014 |
-  //             imm[10:1]     rd           JAL                                                           //|        |        |
-  val jump     = (0x14 << 21) | (0x0 << 7) | 0x6f                                                         //|        | 0x2018 |
-  //             Address        Width         rd            LD                                            //|        |        |
-  val ld_c     = (0x8 << 20) | (0x2 << 12) | (0x6 << 7) | 0x03                                            //| 0x2008 |        |
-  val ld_d     = (0xc << 20) | (0x2 << 12) | (0x7 << 7) | 0x03                                            //| 0x200c |        |
-  //             Function      rs2           rs1           rd           ADD                               //|        |        |
-  val add_cd   = (0x0 << 25) | (0x6 << 20) | (0x7 << 15) | (0x8 << 7) | 0x33 // 0x2014                    //| 0x2010 |        |
-  //             rs2           Base          Function      Addr          SW                               //|        |        |
-  val sw_cd    = (0x8 << 20) | (0x0 << 15) | (0x2 << 12) | (0x14 << 7) | 0x23 // 0x2018                   //| 0x2014 |        |
+  //                                                                                                      //                     P0       P1
+  //             Address       Width         rd            LD                                             //                   -------------------
+  val ld_loc   = (0x1 << 20) | (0x2 << 12) | (0x2 << 7) | 0x03                                            // LW r2, 0x1        | 0x2000 | 0x2000 |
+  //             imm[10:5]     rs2           rs1           BEQ           imm[4:1]     imm[11]      Branch //                   |        |        |
+  val br_loc   = (0x0 << 25) | (0x2 << 20) | (0x0 << 15) | (0x0 << 12) | (0x18 << 7) | (0x0 << 6) | 0x63  // BEQ r0, r2, 0x18  | 0x2004 | 0x2004 |
+  //             Address        Width         rd            LD                                            //                   |        |        |
+  val ld_a     = (0x0 << 20) | (0x2 << 12) | (0x3 << 7) | 0x03                                            // LW r3, 0x0        |        | 0x2008 |
+  val ld_b     = (0x4 << 20) | (0x2 << 12) | (0x4 << 7) | 0x03                                            // LW r4, 0x4        |        | 0x200c |
+  //             Function      rs2           rs1           rd           ADD                               //                   |        |        |
+  val add_ab   = (0x0 << 25) | (0x4 << 20) | (0x3 << 15) | (0x5 << 7) | 0x33 // 0x2014                    // ADD r5, r3, r4    |        | 0x2010 |
+  //             rs2           Base          Function      Addr          SW                               //                   |        |        |
+  val sw_ab    = (0x5 << 20) | (0x0 << 15) | (0x2 << 12) | (0x10 << 7) | 0x23 // 0x2018                   // SW r0, r5, 0x10   |        | 0x2014 |
+  //             imm[10:1]     rd           JAL                                                           //                   |        |        |
+  val jump     = (0x14 << 21) | (0x0 << 7) | 0x6f                                                         // JAL r0, 0x14      |        | 0x2018 |
+  //             Address        Width         rd            LD                                            //                   |        |        |
+  val ld_c     = (0x8 << 20) | (0x2 << 12) | (0x3 << 7) | 0x03                                            //                   | 0x2008 |        |
+  val ld_d     = (0xc << 20) | (0x2 << 12) | (0x4 << 7) | 0x03                                            //                   | 0x200c |        |
+  //             Function      rs2           rs1           rd           ADD                               //                   |        |        |
+  val add_cd   = (0x0 << 25) | (0x4 << 20) | (0x3 << 15) | (0x5 << 7) | 0x33 // 0x2014                    //                   | 0x2010 |        |
+  //             rs2           Base          Function      Addr          SW                               //                   |        |        |
+  val sw_cd    = (0x5 << 20) | (0x0 << 15) | (0x2 << 12) | (0x14 << 7) | 0x23 // 0x2018                   //                   | 0x2014 |        |
 
 
   loadProgram(imem, Array(ld_loc, br_loc, ld_a, ld_b, add_ab, sw_ab, jump, ld_c, ld_d, add_cd, sw_cd))
